@@ -38,5 +38,27 @@
         }
       }
     }
+  },
+  "queue": {
+    "jobManagerBaseUrl": "QUEUE_JOB_MANAGER_BASE_URL",
+    "heartbeatManagerBaseUrl": "QUEUE_HEART_BEAT_MANAGER_BASE_URL",
+    "dequeueIntervalMs": {
+      "__name": "QUEUE_DEQUEUE_INTERVAL_MS",
+      "__format": "number"
+    },
+    "heartbeatIntervalMs": {
+      "__name": "QUEUE_HEART_BEAT_INTERVAL_MS",
+      "__format": "number"
+    },
+    "jobType": "QUEUE_JOB_TYPE",
+    "tilesTaskType": "QUEUE_TASK_TYPE"
+  },
+  "mapproxy": {
+    "mapproxyYamlDir": "MAPPROXY_YAML_DIR",
+    "seedYamlDir": "SEED_YAML_DIR"
+  },
+  "seedAttempts": {
+    "__name": "SEED_ATTEMPTS",
+      "__format": "number"
   }
 }

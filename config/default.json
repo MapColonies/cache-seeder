@@ -23,6 +23,24 @@
         "enabled": true,
         "options": null
       }
+    },
+    "httpRetry": {
+      "attempts": 5,
+      "delay": "exponential",
+      "shouldResetTimeout": true
     }
-  }
+  },
+  "queue": {
+    "jobManagerBaseUrl": "http://localhost:8088",
+    "heartbeatManagerBaseUrl": "http://localhost:8083",
+    "dequeueIntervalMs": 1000,
+    "heartbeatIntervalMs": 300,
+    "jobType": "TilesSeeding",
+    "tilesTaskType": "TilesSeeding"
+  },
+  "mapproxy": {
+    "mapproxyYamlDir": "/mapproxy/mapproxy.yaml",
+    "seedYamlDir": "/mapproxy/seed.yaml"
+  },
+  "seedAttempts": 5
 }
