@@ -1,0 +1,112 @@
+{
+  "grids": {
+    "webmercator": {
+      "base": "GLOBAL_WEBMERCATOR"
+    },
+    "epsg4326grid": {
+      "srs": "EPSG:4326",
+      "bbox": [-180, -90, 180, 90],
+      "name": "newGrids",
+      "origin": "ll",
+      "min_res": 0.703125,
+      "num_levels": 21
+    }
+  },
+  "caches": {
+    "osm_cache": {
+      "grids": ["webmercator"],
+      "sources": ["osm_wms"]
+    },
+    "testId2-RasterVector": {
+      "cache": {
+        "type": "s3",
+        "directory": "/testId2/VectorBest/",
+        "directory_layout": "tms"
+      },
+      "grids": ["epsg4326ul"],
+      "format": "image/jpeg",
+      "sources": [],
+      "upscale_tiles": 18,
+      "minimize_meta_request": true
+    },
+    "testId1-OrthophotoHistory": {
+      "cache": {
+        "type": "file",
+        "directory": "testId1/OrthophotoHistory/",
+        "directory_layout": "tms"
+      },
+      "grids": ["epsg4326ul"],
+      "format": "image/png",
+      "sources": [],
+      "upscale_tiles": 18,
+      "minimize_meta_request": true
+    }
+  },
+  "layers": [
+    {
+      "name": "osm",
+      "title": "Omniscale OSM WMS - osm.omniscale.net",
+      "sources": ["osm_cache"]
+    },
+    {
+      "name": "testId1-OrthophotoHistory",
+      "title": "testId1-OrthophotoHistory",
+      "sources": ["testId1-OrthophotoHistory"]
+    },
+    {
+      "name": "testId2-RasterVector",
+      "title": "testId2-RasterVector",
+      "sources": ["testId2-RasterVector"]
+    }
+  ],
+  "globals": {
+    "cache": {
+      "s3": {
+        "bucket_name": "raster-qa",
+        "endpoint_url": "http://10.8.0.9:9000"
+      },
+      "base_dir": "/mapproxy/cache_data",
+      "lock_dir": "/mapproxy/cache_data/locks",
+      "tile_lock_dir": "/mapproxy/cache_data/tile_locks"
+    },
+    "image": {
+      "format": {
+        "image/png": {
+          "resampling_method": "nearest"
+        },
+        "image/jpeg": {
+          "encoding_options": {
+            "jpeg_quality": 75
+          },
+          "resampling_method": "nearest"
+        }
+      }
+    }
+  },
+  "sources": {
+    "osm_wms": {
+      "req": {
+        "url": "https://maps.omniscale.net/v2/demo/style.default/service?",
+        "layers": "osm"
+      },
+      "type": "wms"
+    }
+  },
+  "services": {
+    "kml": {
+      "use_grid_names": true
+    },
+    "tms": {
+      "origin": "nw",
+      "use_grid_names": true
+    },
+    "wms": {
+      "md": {
+        "title": "MapProxy WMS Proxy",
+        "abstract": "This is a minimal MapProxy example."
+      }
+    },
+    "demo": null,
+    "wmts": null
+  }
+}

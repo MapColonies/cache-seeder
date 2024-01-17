@@ -54,11 +54,16 @@
     "tilesTaskType": "QUEUE_TASK_TYPE"
   },
   "mapproxy": {
+    "mapproxyApiUrl": "MAPPROXY_API_URL",
     "mapproxyYamlDir": "MAPPROXY_YAML_DIR",
     "seedYamlDir": "SEED_YAML_DIR"
   },
   "seedAttempts": {
     "__name": "SEED_ATTEMPTS",
-      "__format": "number"
+    "__format": "number"
+  },
+  "seedConcurrency": {
+    "__name": "SEED_CONCURRENCY",
+    "__format": "number"
   }
 }

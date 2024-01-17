@@ -1,29 +1,23 @@
-import config from 'config';
-import { trace } from '@opentelemetry/api';
-import { DependencyContainer } from 'tsyringe/dist/typings/types';
+import { trace, metrics as OtelMetrics } from '@opentelemetry/api';
+import { container } from 'tsyringe';
 import jsLogger from '@map-colonies/js-logger';
-import { SERVICES } from '../../src/common/constants';
+import { configMock, getMock, hasMock, init as initConfig } from '../mocks/config';
+import { SERVICES, SERVICE_NAME } from '../../src/common/constants';
 import { tracing } from '../../src/common/tracing';
-import { InjectionObject, registerDependencies } from '../../src/common/dependencyRegistration';
+import { InjectionObject } from '../../src/common/dependencyRegistration';
 import { IQueueConfig } from '../../src/common/interfaces';
 
-export interface RegisterOptions {
-  override?: InjectionObject<unknown>[];
-  useChild?: boolean;
-}
-
-export const registerExternalValues = (options?: RegisterOptions): DependencyContainer => {
-  const logger = jsLogger({ enabled: false });
-  const queueConfig = config.get<IQueueConfig>('queue');
-
-  tracing.start();
-  const tracer = trace.getTracer('app');
-
-  const dependencies: InjectionObject<unknown>[] = [
-    { token: SERVICES.CONFIG, provider: { useValue: config } },
-    { token: SERVICES.LOGGER, provider: { useValue: logger } },
+const queueConfig = configMock.get<IQueueConfig>('queue');
+tracing.start();
+const tracer = trace.getTracer('app');
+function getContainerConfig(): InjectionObject<unknown>[] {
+  initConfig();
+  return [
+    { token: SERVICES.CONFIG, provider: { useValue: configMock } },
+    { token: SERVICES.LOGGER, provider: { useValue: jsLogger({ enabled: false }) } },
     { token: SERVICES.QUEUE_CONFIG, provider: { useValue: queueConfig } },
     { token: SERVICES.TRACER, provider: { useValue: tracer } },
+    { token: SERVICES.METER, provider: { useValue: OtelMetrics.getMeterProvider().getMeter(SERVICE_NAME) } },
     {
       token: 'onSignal',
       provider: {
@@ -35,6 +29,14 @@ export const registerExternalValues = (options?: RegisterOptions): DependencyCon
       },
     },
   ];
+}
+const resetContainer = (clearInstances = true): void => {
+  if (clearInstances) {
+    container.clearInstances();
+  }
 
-  return registerDependencies(dependencies, options?.override, options?.useChild);
+  getMock.mockReset();
+  hasMock.mockReset();
 };
+
+export { getContainerConfig, resetContainer };

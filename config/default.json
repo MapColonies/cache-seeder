@@ -27,7 +27,8 @@
     "httpRetry": {
       "attempts": 5,
       "delay": "exponential",
-      "shouldResetTimeout": true
+      "shouldResetTimeout": true,
+      "disableHttpClientLogs": true
     }
   },
   "queue": {
@@ -39,8 +40,10 @@
     "tilesTaskType": "TilesSeeding"
   },
   "mapproxy": {
+    "mapproxyApiUrl": "http://localhost:8086",
     "mapproxyYamlDir": "/mapproxy/mapproxy.yaml",
     "seedYamlDir": "/mapproxy/seed.yaml"
   },
-  "seedAttempts": 5
+  "seedAttempts": 5,
+  "seedConcurrency": 5
 }

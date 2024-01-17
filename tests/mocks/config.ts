@@ -1,7 +1,8 @@
 import config from 'config';
+import { get, has } from 'lodash';
 import { IConfig } from '../../src/common/interfaces';
 
-let keys: Record<string, unknown> = {};
+let mockConfig: Record<string, unknown> = {};
 const getMock = jest.fn();
 const hasMock = jest.fn();
 
@@ -12,14 +13,80 @@ const configMock = {
 
 const init = (): void => {
   getMock.mockImplementation((key: string): unknown => {
-    return keys[key] ?? config.get(key);
+    return mockConfig[key] ?? config.get(key);
   });
 };
-const setValue = (key: string, value: unknown): void => {
-  keys[key] = value;
+
+const setValue = (key: string | Record<string, unknown>, value?: unknown): void => {
+  if (typeof key === 'string') {
+    mockConfig[key] = value;
+  } else {
+    mockConfig = { ...mockConfig, ...key };
+  }
 };
 
 const clear = (): void => {
-  keys = {};
+  mockConfig = {};
 };
-export { configMock, setValue, clear, init };
+
+const setConfigValues = (values: Record<string, unknown>): void => {
+  getMock.mockImplementation((key: string) => {
+    const value = get(values, key) ?? config.get(key);
+    return value;
+  });
+  hasMock.mockImplementation((key: string) => has(values, key) || config.has(key));
+};
+
+const registerDefaultConfig = (): void => {
+  const config = {
+    openapiConfig: {
+      filePath: './bundledApi.yaml',
+      basePath: '/docs',
+      rawPath: '/api',
+      uiPath: '/api',
+    },
+    telemetry: {
+      logger: {
+        level: 'info',
+        prettyPrint: false,
+      },
+    },
+    server: {
+      port: '8081',
+      request: {
+        payload: {
+          limit: '1mb',
+        },
+      },
+      response: {
+        compression: {
+          enabled: true,
+          options: null,
+        },
+      },
+      httpRetry: {
+        attempts: 5,
+        delay: 'exponential',
+        shouldResetTimeout: true,
+        disableHttpClientLogs: true,
+      },
+    },
+    queue: {
+      jobManagerBaseUrl: 'http://test2',
+      heartbeatManagerBaseUrl: 'http://test2',
+      dequeueIntervalMs: 1000,
+      heartbeatIntervalMs: 300,
+      jobType: 'TilesSeeding',
+      tilesTaskType: 'TilesSeeding',
+    },
+    mapproxy: {
+      mapproxyApiUrl: 'http://localhost:8083',
+      mapproxyYamlDir: '/mapproxy/mapproxy.yaml',
+      seedYamlDir: '/mapproxy/seed.yaml',
+    },
+    seedAttempts: 5,
+  };
+  setConfigValues(config);
+};
+
+export { getMock, hasMock, configMock, setValue, clear, init, setConfigValues, registerDefaultConfig };

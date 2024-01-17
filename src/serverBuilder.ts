@@ -1,4 +1,4 @@
-import express, { Router } from 'express';
+import express from 'express';
 import bodyParser from 'body-parser';
 import compression from 'compression';
 import { getErrorHandlerMiddleware } from '@map-colonies/error-express-handler';
