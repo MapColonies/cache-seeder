@@ -25,38 +25,41 @@ export class CacheSeedManager {
   }
 
   public async handleCacheSeedTask(): Promise<boolean> {
-    this.logger.info('Running search for seed jobs');
+    this.logger.debug('Running search for seed jobs');
     const tilesTask = await this.queueClient.queueHandlerForTileSeedingTasks.dequeue<ITaskParams>(this.taskType);
-    if (tilesTask) {
-      const job = await this.queueClient.jobsClient.getJob<IJobParams, ITaskParams>(tilesTask.jobId);
-      const jobId = tilesTask.jobId;
-      const taskId = tilesTask.id;
-      const attempts = tilesTask.attempts;
-      const seeds = tilesTask.parameters.seedTasks;
-      this.logger.info({
-        msg: `Found new seed job: ${jobId}`,
-        jobId,
-        productId: job.resourceId,
-        productVersion: job.version,
-        productType: job.productType,
-      });
-
-      if (attempts <= this.seedAttempts) {
-        try {
-          await this.runTask(seeds);
-          await this.queueClient.queueHandlerForTileSeedingTasks.ack(jobId, taskId);
-          await this.queueClient.queueHandlerForTileSeedingTasks.jobManagerClient.updateJob(jobId, {
-            status: OperationStatus.COMPLETED,
-            percentage: 100,
-          });
-        } catch (error) {
-          await this.queueClient.queueHandlerForTileSeedingTasks.reject(jobId, taskId, true, (error as Error).message);
-        }
-      } else {
-        await this.queueClient.queueHandlerForTileSeedingTasks.reject(jobId, taskId, false);
-        await this.queueClient.queueHandlerForTileSeedingTasks.jobManagerClient.updateJob(jobId, { status: OperationStatus.FAILED });
-      }
+    if (!tilesTask) {
+      return Boolean(tilesTask);
     }
+    const job = await this.queueClient.jobsClient.getJob<IJobParams, ITaskParams>(tilesTask.jobId);
+    const jobId = tilesTask.jobId;
+    const taskId = tilesTask.id;
+    const attempts = tilesTask.attempts;
+    const seeds = tilesTask.parameters.seedTasks;
+    this.logger.info({
+      msg: `Found new seed job: ${jobId}`,
+      jobId,
+      taskId,
+      productId: job.resourceId,
+      productVersion: job.version,
+      productType: job.productType,
+    });
+
+    if (attempts <= this.seedAttempts) {
+      try {
+        await this.runTask(seeds);
+        await this.queueClient.queueHandlerForTileSeedingTasks.ack(jobId, taskId);
+        await this.queueClient.queueHandlerForTileSeedingTasks.jobManagerClient.updateJob(jobId, {
+          status: OperationStatus.COMPLETED,
+          percentage: 100,
+        });
+      } catch (error) {
+        await this.queueClient.queueHandlerForTileSeedingTasks.reject(jobId, taskId, true, (error as Error).message);
+      }
+    } else {
+      await this.queueClient.queueHandlerForTileSeedingTasks.reject(jobId, taskId, false);
+      await this.queueClient.queueHandlerForTileSeedingTasks.jobManagerClient.updateJob(jobId, { status: OperationStatus.FAILED });
+    }
+
     return Boolean(tilesTask);
   }
 

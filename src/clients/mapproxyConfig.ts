@@ -24,16 +24,16 @@ export class MapproxyConfigClient extends HttpClient {
     // eslint-disable-next-line @typescript-eslint/naming-convention
     const headers = { Accept: format };
     try {
-      this.logger.info({ msg: `Send mapproxy.yaml configuration from provider request` });
+      this.logger.info({ msg: `Getting mapproxy.yaml configuration from provider request` });
       const mapproxyConfig: IMapProxyConfig = await this.get(this.getConfigUr, undefined, undefined, undefined, headers);
-      this.logger.debug({ msg: `got mapproxy.yaml configuration`, config: mapproxyConfig });
+      this.logger.debug({ msg: `Got mapproxy.yaml configuration`, config: mapproxyConfig });
       return mapproxyConfig;
     } catch (err) {
       if (err instanceof NotFoundError) {
-        this.logger.error('Failed to find mapproxy config');
+        this.logger.error({ msg: 'Failed to find mapproxy config', error: (err as Error).message });
         throw err;
       } else {
-        this.logger.error('Unknown error on getting mapproxy config');
+        this.logger.error({ msg: 'Unknown error on getting mapproxy config', error: (err as Error).message });
         throw err;
       }
     }

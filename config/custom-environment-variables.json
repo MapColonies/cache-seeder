@@ -41,13 +41,15 @@
   },
   "queue": {
     "jobManagerBaseUrl": "QUEUE_JOB_MANAGER_BASE_URL",
-    "heartbeatManagerBaseUrl": "QUEUE_HEART_BEAT_MANAGER_BASE_URL",
+    "heartbeat": {
+      "heartbeatManagerBaseUrl": "QUEUE_HEART_BEAT_MANAGER_BASE_URL",
+      "heartbeatIntervalMs": {
+        "__name": "QUEUE_HEART_BEAT_INTERVAL_MS",
+        "__format": "number"
+      }
+    },
     "dequeueIntervalMs": {
       "__name": "QUEUE_DEQUEUE_INTERVAL_MS",
-      "__format": "number"
-    },
-    "heartbeatIntervalMs": {
-      "__name": "QUEUE_HEART_BEAT_INTERVAL_MS",
       "__format": "number"
     },
     "jobType": "QUEUE_JOB_TYPE",

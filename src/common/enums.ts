@@ -3,7 +3,7 @@ export enum SeedMode {
   CLEAN = 'clean',
 }
 
-export enum SchemaType {
+export enum SchemaType { // TODO: use MIMETypes
   JSON = 'application/json',
   YAML = 'application/yaml',
 }

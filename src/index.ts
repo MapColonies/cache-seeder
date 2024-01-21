@@ -27,6 +27,7 @@ server.listen(port, () => {
 const mainLoop = async (): Promise<void> => {
   const isRunning = true;
   const dequeueIntervalMs = config.get<number>('queue.dequeueIntervalMs');
+  logger.info(`Start seeder worker's main polling loop`);
   //eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
   while (isRunning) {
     try {

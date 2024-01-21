@@ -60,7 +60,6 @@ const task: ITaskResponse<ITaskParams> = {
       },
     ],
     catalogId: 'bf60bc17-aa2e-49df-9478-98b783b47b68',
-    jobId: '6386387e-9ea9-48e0-85e0-f78552e48de8',
     spanId: '123456',
     cacheType: CacheType.REDIS,
   },

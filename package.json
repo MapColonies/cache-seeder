@@ -1,7 +1,7 @@
 {
   "name": "cache-seed",
   "version": "1.0.0",
-  "description": "This is template for map colonies typescript service",
+  "description": "This is worker that responsible execute seed&clean job for mapproxy redis caches wrapping mapproxy-utils package",
   "main": "./src/index.ts",
   "scripts": {
     "test:unit": "jest --config=./tests/configurations/unit/jest.config.js",

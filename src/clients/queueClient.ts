@@ -19,9 +19,9 @@ export class QueueClient {
       logger,
       this.queueConfig.jobType,
       this.queueConfig.jobManagerBaseUrl,
-      this.queueConfig.heartbeatManagerBaseUrl,
-      this.queueConfig.dequeueIntervalMs,
-      this.queueConfig.heartbeatIntervalMs
+      this.queueConfig.heartbeat.heartbeatManagerBaseUrl,
+      this.queueConfig.heartbeat.heartbeatIntervalMs,
+      this.queueConfig.dequeueIntervalMs
     );
     this.jobsClient = new JobManagerClient(
       logger,

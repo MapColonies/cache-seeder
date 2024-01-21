@@ -33,9 +33,11 @@
   },
   "queue": {
     "jobManagerBaseUrl": "http://localhost:8088",
-    "heartbeatManagerBaseUrl": "http://localhost:8083",
+    "heartbeat": {
+      "heartbeatManagerBaseUrl": "http://localhost:8083",
+      "heartbeatIntervalMs": 3000
+    },
     "dequeueIntervalMs": 1000,
-    "heartbeatIntervalMs": 300,
     "jobType": "TilesSeeding",
     "tilesTaskType": "TilesSeeding"
   },

@@ -18,11 +18,15 @@ export interface OpenApiConfig {
 
 export interface IQueueConfig {
   jobManagerBaseUrl: string;
-  heartbeatManagerBaseUrl: string;
+  heartbeat: IHeartbeatConfig;
   dequeueIntervalMs: number;
-  heartbeatIntervalMs: number;
   jobType: string;
   tilesTaskType: string;
+}
+
+export interface IHeartbeatConfig {
+  heartbeatManagerBaseUrl: string;
+  heartbeatIntervalMs: number;
 }
 
 export interface IJobParams {
@@ -80,7 +84,6 @@ export interface ISeedOptions {
 export interface ITaskParams {
   seedTasks: ISeedOptions[];
   catalogId: string;
-  jobId: string;
   spanId: string;
   cacheType: CacheType;
 }

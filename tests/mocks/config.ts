@@ -73,9 +73,11 @@ const registerDefaultConfig = (): void => {
     },
     queue: {
       jobManagerBaseUrl: 'http://test2',
-      heartbeatManagerBaseUrl: 'http://test2',
+      heartbeat: {
+        heartbeatManagerBaseUrl: 'http://test1',
+        heartbeatIntervalMs: 300,
+      },
       dequeueIntervalMs: 1000,
-      heartbeatIntervalMs: 300,
       jobType: 'TilesSeeding',
       tilesTaskType: 'TilesSeeding',
     },
