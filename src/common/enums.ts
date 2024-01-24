@@ -9,5 +9,7 @@ export enum SchemaType { // TODO: use MIMETypes
 }
 
 export enum CacheType {
+  S3 = 's3',
   REDIS = 'redis',
+  GPKG = 'geopackage',
 }

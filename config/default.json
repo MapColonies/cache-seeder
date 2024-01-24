@@ -44,7 +44,9 @@
   "mapproxy": {
     "mapproxyApiUrl": "http://localhost:8086",
     "mapproxyYamlDir": "/mapproxy/mapproxy.yaml",
-    "seedYamlDir": "/mapproxy/seed.yaml"
+    "seedYamlDir": "/mapproxy/seed.yaml",
+    "geometryTxtFile": "/mapproxy/coverage.json",
+    "seedProgressFileDir": "/mapproxy/mapproxy_seed_progress"
   },
   "seedAttempts": 5,
   "seedConcurrency": 5

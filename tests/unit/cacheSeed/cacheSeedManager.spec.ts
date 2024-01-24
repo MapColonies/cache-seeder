@@ -1,5 +1,6 @@
 import jsLogger from '@map-colonies/js-logger';
 import nock from 'nock';
+import { IHttpRetryConfig } from '@map-colonies/mc-utils';
 import { CacheSeedManager } from '../../../src/cacheSeed/cacheSeedManager';
 import { configMock, init as initConfig, clear as clearConfig, setValue } from '../../mocks/config';
 import { getApp } from '../../../src/app';
@@ -8,9 +9,11 @@ import { getContainerConfig, resetContainer } from '../testContainerConfig';
 import { QueueClient } from '../../../src/clients/queueClient';
 import { MapproxySeed } from '../../../src/mapproxyUtils/mapproxySeed';
 import { IMapProxyConfig, IQueueConfig } from '../../../src/common/interfaces';
-import { getConfigMock, mapproxyConfigMock } from '../../mocks/clients/mapproxyConfig';
+import { getConfigMock } from '../../mocks/clients/mapproxyConfig';
+import { MapproxyConfigClient } from '../../../src/clients/mapproxyConfig';
 
 let queueClient: QueueClient;
+let mapproxyConfigClient: MapproxyConfigClient;
 let mapproxySeed: MapproxySeed;
 let dequeueStub: jest.SpyInstance;
 let ackStubForTileTasks: jest.SpyInstance;
@@ -23,6 +26,8 @@ describe('CacheSeedManager', () => {
     initConfig();
     setValue('seedAttempts', 4);
     setValue('queue', { ...configMock.get<IQueueConfig>('queue'), jobManagerBaseUrl: jobManagerTestUrl });
+    setValue('server.httpRetry', { ...configMock.get<IHttpRetryConfig>('server.httpRetry'), delay: 0 });
+    mapproxyConfigClient = new MapproxyConfigClient(configMock, jsLogger({ enabled: false }));
     queueClient = new QueueClient(configMock, jsLogger({ enabled: false }), configMock.get<IQueueConfig>('queue'));
 
     console.warn = jest.fn();
@@ -30,8 +35,8 @@ describe('CacheSeedManager', () => {
       override: [...getContainerConfig()],
       useChild: false,
     });
-    mapproxySeed = new MapproxySeed(jsLogger({ enabled: false }), configMock);
-    cacheSeedManager = new CacheSeedManager(jsLogger({ enabled: false }), configMock, queueClient, mapproxyConfigMock, mapproxySeed);
+    mapproxySeed = new MapproxySeed(jsLogger({ enabled: false }), configMock, mapproxyConfigClient);
+    cacheSeedManager = new CacheSeedManager(jsLogger({ enabled: false }), configMock, queueClient, mapproxySeed);
   });
 
   afterEach(function () {

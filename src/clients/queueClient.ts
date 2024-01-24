@@ -9,25 +9,24 @@ import { SERVICES } from '../common/constants';
 export class QueueClient {
   public readonly queueHandlerForTileSeedingTasks: QueueHandler;
   public readonly jobsClient: JobManagerClient;
+  public readonly httpRetryConfig: IHttpRetryConfig;
 
   public constructor(
     @inject(SERVICES.CONFIG) config: IConfig,
     @inject(SERVICES.LOGGER) private readonly logger: Logger,
     @inject(SERVICES.QUEUE_CONFIG) private readonly queueConfig: IQueueConfig
   ) {
+    this.httpRetryConfig = config.get<IHttpRetryConfig>('server.httpRetry');
+
     this.queueHandlerForTileSeedingTasks = new QueueHandler(
       logger,
       this.queueConfig.jobType,
       this.queueConfig.jobManagerBaseUrl,
       this.queueConfig.heartbeat.heartbeatManagerBaseUrl,
+      this.queueConfig.dequeueIntervalMs,
       this.queueConfig.heartbeat.heartbeatIntervalMs,
-      this.queueConfig.dequeueIntervalMs
+      this.httpRetryConfig
     );
-    this.jobsClient = new JobManagerClient(
-      logger,
-      this.queueConfig.jobType,
-      this.queueConfig.jobManagerBaseUrl,
-      config.get<IHttpRetryConfig>('server.httpRetry')
-    );
+    this.jobsClient = new JobManagerClient(logger, this.queueConfig.jobType, this.queueConfig.jobManagerBaseUrl, this.httpRetryConfig);
   }
 }

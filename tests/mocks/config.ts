@@ -85,6 +85,8 @@ const registerDefaultConfig = (): void => {
       mapproxyApiUrl: 'http://localhost:8083',
       mapproxyYamlDir: '/mapproxy/mapproxy.yaml',
       seedYamlDir: '/mapproxy/seed.yaml',
+      geometryTxtFile: '/mapproxy/coverage.json',
+      seedProgressFileDir: '/mapproxy/mapproxy_seed_progress',
     },
     seedAttempts: 5,
   };

@@ -58,7 +58,8 @@
   "mapproxy": {
     "mapproxyApiUrl": "MAPPROXY_API_URL",
     "mapproxyYamlDir": "MAPPROXY_YAML_DIR",
-    "seedYamlDir": "SEED_YAML_DIR"
+    "seedYamlDir": "SEED_YAML_DIR",
+    "geometryTxtFile": "GEOMETRY_TXT_FILE"
   },
   "seedAttempts": {
     "__name": "SEED_ATTEMPTS",

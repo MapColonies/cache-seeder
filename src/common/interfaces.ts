@@ -62,6 +62,7 @@ export interface IMapProxyGlobalConfig {
     };
   };
 }
+
 export interface IMapProxyConfig {
   services: JsonObject;
   layers: IMapProxyLayer[];
@@ -70,19 +71,26 @@ export interface IMapProxyConfig {
   globals: IMapProxyGlobalConfig;
 }
 
-export interface ISeedOptions {
+export interface ISeedBase {
   mode: SeedMode;
-  layerId: string; // cache name as configured in mapproxy
   grid: string;
   fromZoomLevel: number;
   toZoomLevel: number;
-  refreshBefore: string;
   geometry: GeoJSON;
   skipUncached: boolean;
+  layerId: string; // cache name as configured in mapproxy
+}
+
+export interface ITaskSeedOptions extends ISeedBase {
+  refreshBefore: string;
+}
+
+export interface ITaskSeedCleanOptions extends ISeedBase {
+  remove_before: string;
 }
 
 export interface ITaskParams {
-  seedTasks: ISeedOptions[];
+  seedTasks: ITaskSeedOptions[];
   catalogId: string;
   spanId: string;
   cacheType: CacheType;
