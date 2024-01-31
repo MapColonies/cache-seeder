@@ -90,7 +90,7 @@ export interface ITaskSeedCleanOptions extends ISeedBase {
 }
 
 export interface ITaskParams {
-  seedTasks: ITaskSeedOptions[];
+  seedTasks: ISeedBase[];
   catalogId: string;
   spanId: string;
   cacheType: CacheType;

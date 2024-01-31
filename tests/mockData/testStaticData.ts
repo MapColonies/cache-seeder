@@ -2,8 +2,12 @@
 import { IJobResponse, ITaskResponse, OperationStatus } from '@map-colonies/mc-priority-queue';
 import { ITaskParams } from '../../src/common/interfaces';
 import { CacheType, SeedMode } from '../../src/common/enums';
+// import * as zx from 'zx';
+// import { ProcessOutput, ProcessPromise, $ } from 'zx';
+// import { Readable, Writable } from 'stream';
+// import { ChildProcess } from 'child_process';
 
-const task: ITaskResponse<ITaskParams> = {
+const task = {
   id: '9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d',
   status: OperationStatus.PENDING,
   percentage: 0,
@@ -35,7 +39,7 @@ const task: ITaskResponse<ITaskParams> = {
         toZoomLevel: 21,
         skipUncached: true,
         fromZoomLevel: 0,
-        refreshBefore: '2024-01-16T16:14:22.069Z',
+        refreshBefore: '2025-01-16T16:14:22',
       },
       {
         grid: 'wgs84',
@@ -56,7 +60,7 @@ const task: ITaskResponse<ITaskParams> = {
         toZoomLevel: 21,
         skipUncached: true,
         fromZoomLevel: 0,
-        refreshBefore: '2024-01-16T16:14:22.069Z',
+        refreshBefore: '2025-01-16T16:14:22',
       },
     ],
     catalogId: 'bf60bc17-aa2e-49df-9478-98b783b47b68',
@@ -64,7 +68,7 @@ const task: ITaskResponse<ITaskParams> = {
     cacheType: CacheType.REDIS,
   },
   resettable: false,
-};
+} as unknown as ITaskResponse<ITaskParams>;
 
 function getTask(): ITaskResponse<ITaskParams> {
   return task;
@@ -99,9 +103,39 @@ const job: IJobResponse<unknown, unknown> = {
   created: '2024-01-16T16:21:53.020Z',
   updated: '2024-01-16T16:21:53.020Z',
 };
-
+//   updated: '2024-01-16T16:21:53.020Z',
 function getJob(): IJobResponse<unknown, unknown> {
   return job;
 }
 
+// const readable = Readable.from(['some test data', 'some test data2']);
+// const cmdProcessPromise: ProcessPromise<ProcessOutput> = {
+//   stdout: readable,
+//   child: new ChildProcess(),
+//   stdin: new Writable(),
+//   stderr: new Readable(),
+//   exitCode: Promise.resolve(0),
+//   pipe: function (dest: zx.ProcessPromise<zx.ProcessOutput> | Writable): zx.ProcessPromise<zx.ProcessOutput> {
+//     throw new Error('Function not implemented.');
+//   },
+//   kill: function (signal?: string | number | undefined): Promise<void> {
+//     throw new Error('Function not implemented.');
+//   },
+//   then: function <TResult1 = zx.ProcessOutput, TResult2 = never>(
+//     onfulfilled?: ((value: zx.ProcessOutput) => TResult1 | PromiseLike<TResult1>) | null | undefined,
+//     onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | null | undefined
+//   ): Promise<TResult1 | TResult2> {
+//     throw new Error('Function not implemented.');
+//   },
+//   catch: function <TResult = never>(
+//     onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | null | undefined
+//   ): Promise<zx.ProcessOutput | TResult> {
+//     throw new Error('Function not implemented.');
+//   },
+//   finally: function (onfinally?: (() => void) | null | undefined): Promise<zx.ProcessOutput> {
+//     throw new Error('Function not implemented.');
+//   },
+//   [Symbol.toStringTag]: '',
+// };
+// export { getTask, getJob, cmdProcessPromise };
 export { getTask, getJob };

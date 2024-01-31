@@ -1,8 +1,8 @@
 import { Logger } from '@map-colonies/js-logger';
 import { inject, singleton } from 'tsyringe';
-import { OperationStatus } from '@map-colonies/mc-priority-queue';
+import { OperationStatus, ITaskResponse } from '@map-colonies/mc-priority-queue';
 import { SERVICES } from '../common/constants';
-import { IConfig, IJobParams, ITaskSeedOptions, ITaskParams } from '../common/interfaces';
+import { IConfig, IJobParams, ITaskParams, ISeedBase } from '../common/interfaces';
 import { MapproxySeed } from '../mapproxyUtils/mapproxySeed';
 import { QueueClient } from '../clients/queueClient';
 import { CacheType, SeedMode } from '../common/enums';
@@ -29,18 +29,11 @@ export class CacheSeedManager {
       return Boolean(tilesTask);
     }
 
-    if (tilesTask.parameters.cacheType !== CacheType.REDIS) {
-      this.logger.error(`Unsupported cache type, only ${CacheType.REDIS} type is valid`);
-      const cacheType = tilesTask.parameters.cacheType;
-      // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
-      await this.queueClient.queueHandlerForTileSeedingTasks.reject(tilesTask.jobId, tilesTask.id, false, `Unsupported cache type ${cacheType}`);
-      await this.queueClient.queueHandlerForTileSeedingTasks.jobManagerClient.updateJob(tilesTask.jobId, {
-        status: OperationStatus.FAILED,
-        // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
-        reason: `Unsupported cache type ${cacheType}`,
-      });
-      return false;
+    const validCacheType = await this.isValidCacheType(tilesTask);
+    if (!validCacheType) {
+      return validCacheType;
     }
+
     const job = await this.queueClient.jobsClient.getJob<IJobParams, ITaskParams>(tilesTask.jobId);
     const jobId = tilesTask.jobId;
     const taskId = tilesTask.id;
@@ -55,9 +48,20 @@ export class CacheSeedManager {
       productType: job.productType,
     });
 
-    if (attempts <= this.seedAttempts) {
+    if (attempts > this.seedAttempts) {
+      this.logger.warn({
+        msg: `Reached to max attempts and will close task as failed`,
+        maxServiceAttempts: this.seedAttempts,
+        currentTaskAttemps: attempts,
+        jobId,
+        taskId,
+      });
+      await this.queueClient.queueHandlerForTileSeedingTasks.reject(jobId, taskId, false);
+      await this.queueClient.queueHandlerForTileSeedingTasks.jobManagerClient.updateJob(jobId, { status: OperationStatus.FAILED });
+    } else {
       try {
-        await this.runTask(seeds);
+        // will handle Seed-Clean task
+        await this.runTask(seeds, jobId, taskId);
         await this.queueClient.queueHandlerForTileSeedingTasks.ack(jobId, taskId);
         await this.queueClient.queueHandlerForTileSeedingTasks.jobManagerClient.updateJob(jobId, {
           status: OperationStatus.COMPLETED,
@@ -66,22 +70,54 @@ export class CacheSeedManager {
       } catch (error) {
         await this.queueClient.queueHandlerForTileSeedingTasks.reject(jobId, taskId, true, (error as Error).message);
       }
-    } else {
-      this.logger.warn({ msg: `Reached to max attempts and will close task as failed`, maxAttempts: this.seedAttempts });
-      await this.queueClient.queueHandlerForTileSeedingTasks.reject(jobId, taskId, false);
-      await this.queueClient.queueHandlerForTileSeedingTasks.jobManagerClient.updateJob(jobId, { status: OperationStatus.FAILED });
     }
 
+    // complete the current pool
     return Boolean(tilesTask);
   }
 
-  private async runTask(seedTasks: ITaskSeedOptions[]): Promise<void> {
+  private async runTask(seedTasks: ISeedBase[], jobId: string, taskId: string): Promise<void> {
     for (const task of seedTasks) {
-      if (task.mode === SeedMode.SEED) {
-        await this.mapproxySeed.runSeed(task); // todo - I will consider on phase to pass other ready to run object
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+      if (task.mode === SeedMode.SEED || task.mode === SeedMode.CLEAN) {
+        this.logger.info({
+          msg: `Found ${task.mode} task for job: ${jobId} task: ${taskId}`,
+          mode: task.mode,
+          layerId: task.layerId,
+          jobId,
+          taskId,
+        });
+        await this.mapproxySeed.runSeed(task, jobId, taskId);
       } else {
-        await this.mapproxySeed.runClean(task);
+        this.logger.error({
+          msg: `Unsupported seeding mode: ${task.mode as string}, should be one of: 'seed' or 'clean'`,
+          mode: task.mode,
+          layerId: task.layerId,
+          jobId,
+          taskId,
+        });
+        throw new Error(`Unsupported seeding mode: ${task.mode as string}, should be one of: 'seed' or 'clean'`);
       }
+    }
+  }
+
+  private async isValidCacheType(tilesTask: ITaskResponse<ITaskParams>): Promise<boolean> {
+    if (tilesTask.parameters.cacheType !== CacheType.REDIS) {
+      this.logger.error({
+        msg: `Unsupported cache type, only ${CacheType.REDIS} type is valid`,
+        jobId: tilesTask.jobId,
+        taskId: tilesTask.id,
+        cacheType: tilesTask.parameters.cacheType,
+      });
+      const cacheType = tilesTask.parameters.cacheType;
+      await this.queueClient.queueHandlerForTileSeedingTasks.reject(tilesTask.jobId, tilesTask.id, false, `Unsupported cache type ${cacheType}`);
+      await this.queueClient.queueHandlerForTileSeedingTasks.jobManagerClient.updateJob(tilesTask.jobId, {
+        status: OperationStatus.FAILED,
+        reason: `Unsupported cache type ${cacheType}`,
+      });
+      return false;
+    } else {
+      return true;
     }
   }
 }
