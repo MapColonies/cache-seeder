@@ -1,17 +1,19 @@
 apiVersion: backstage.io/v1alpha1
 kind: Component
 metadata:
-  name: ts-server-boilerplate
-  description: A boilerplate github repo for a REST API service in NodeJS for MapColonies
+  name: cache-seeder
+  description: This is worker that responsible execute seed&clean job for mapproxy redis caches wrapping mapproxy-utils package
   annotations:
-    github.com/project-slug: MapColonies/ts-server-boilerplate
+    github.com/project-slug: MapColonies/cache-seeder
   tags:
     - nodejs
     - typescript
     - expressjs
-    - boilerplate
+    - mapproxy-utils
+    - redis
+    - job-manager
 spec:
   type: service
   lifecycle: production
-  owner: DevInfra
-  system: boilerplate
+  owner: RasterTeam
+  system: Discrete-ingestion

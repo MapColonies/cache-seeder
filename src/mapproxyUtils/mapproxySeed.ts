@@ -48,8 +48,8 @@ export class MapproxySeed {
     });
 
     try {
-      // Pre data validation
 
+      // Pre data validation
       if (!zoomComparison(task.fromZoomLevel, task.toZoomLevel)) {
         throw new Error(`from zoom level value cannot be bigger than to zoom level value`);
       }
