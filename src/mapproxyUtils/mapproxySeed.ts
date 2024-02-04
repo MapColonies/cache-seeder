@@ -4,7 +4,7 @@ import { dump } from 'js-yaml';
 import { Logger } from '@map-colonies/js-logger';
 import { inject, singleton } from 'tsyringe';
 import { SERVICES } from '../common/constants';
-import { IConfig, ISeedBase, ITaskSeedCleanOptions, ITaskSeedOptions } from '../common/interfaces';
+import { IConfig, ISeed } from '../common/interfaces';
 import { MapproxyConfigClient } from '../clients/mapproxyConfig';
 /* eslint-disable @typescript-eslint/naming-convention */
 import { BaseCache, Cleanup, Seed, seedsSchema, cleanupsSchema, baseSchema } from '../common/schemas/seeds';
@@ -34,7 +34,7 @@ export class MapproxySeed {
     this.mapproxySeedProgressDir = this.config.get<string>('mapproxy.seedProgressFileDir');
   }
 
-  public async runSeed(task: ISeedBase, jobId: string, taskId: string): Promise<void> {
+  public async runSeed(task: ISeed, jobId: string, taskId: string): Promise<void> {
     this.logger.info({
       msg: `processing ${task.mode} for job of ${task.layerId}`,
       jobId,
@@ -44,7 +44,7 @@ export class MapproxySeed {
       mode: task.mode,
       fromZoom: task.fromZoomLevel,
       toZoom: task.toZoomLevel,
-      ttl: task.mode === SeedMode.SEED ? (task as ITaskSeedOptions).refreshBefore : (task as ITaskSeedCleanOptions).remove_before,
+      refreshBefore: task.refreshBefore,
     });
 
     try {
@@ -53,34 +53,40 @@ export class MapproxySeed {
         throw new Error(`from zoom level value cannot be bigger than to zoom level value`);
       }
 
-      const seedingDate = (task as ITaskSeedOptions).refreshBefore;
+      const seedingDate = task.refreshBefore;
       if (!isValidDateFormat(seedingDate)) {
         throw new Error(`Date string must be 'ISO_8601' format: yyyy-MM-dd'T'HH:mm:ss, for example: 2023-11-07T12:35:00`);
       }
 
-      await this.writeMapproxyYaml();
-      await this.writeGeojsonTxtFile(this.geometryCoverageFilePath, JSON.stringify(task.geometry));
-      await this.createSeedYamlFile(task);
-      await this.executeSeed(task);
-      this.logger.info({ msg: `complete seed for job of ${task.layerId}`, jobId, taskId });
+      await this.writeMapproxyYaml(jobId, taskId);
+      await this.writeGeojsonTxtFile(this.geometryCoverageFilePath, JSON.stringify(task.geometry), jobId, taskId);
+      await this.createSeedYamlFile(task, jobId, taskId);
+      await this.executeSeed(task, jobId, taskId);
+      this.logger.info({ msg: `complete seed (type of ${task.mode}) for job of ${task.layerId}`, jobId, taskId });
     } catch (err) {
-      this.logger.error({ msg: `failed seed for job of ${task.layerId}`, jobId, taskId, err });
+      this.logger.error({ msg: `failed seed for job (type of ${task.mode}) of ${task.layerId}`, jobId, taskId, err });
       throw new Error(`failed seed for job of ${task.layerId} with reason: ${(err as Error).message}`);
     }
   }
 
-  private async writeGeojsonTxtFile(path: string, data: string): Promise<void> {
+  private async writeGeojsonTxtFile(path: string, data: string, jobId: string, taskId: string): Promise<void> {
     try {
-      this.logger.info({ msg: `Generating geoJson coverage file: ${path}` });
+      this.logger.info({ msg: `Generating geoJson coverage file: ${path}`, jobId, taskId });
       await fsp.writeFile(path, data, 'utf8');
     } catch (err) {
-      this.logger.error({ msg: 'Failed on generating geometry coverage file', err });
+      this.logger.error({ msg: 'Failed on generating geometry coverage file', jobId, taskId, err });
       throw new Error('Failed on generating geometry coverage file');
     }
   }
 
-  private async createSeedYamlFile(seedOptions: ISeedBase): Promise<void> {
-    this.logger.info({ msg: `Generating seed.yaml file to ${seedOptions.mode} task`, layerId: seedOptions.layerId, mode: seedOptions.mode });
+  private async createSeedYamlFile(seedOptions: ISeed, jobId: string, taskId: string): Promise<void> {
+    this.logger.info({
+      msg: `Generating seed.yaml file to ${seedOptions.mode} task`,
+      layerId: seedOptions.layerId,
+      mode: seedOptions.mode,
+      jobId,
+      taskId,
+    });
     try {
       // build the base cache object related to seed\clean job
       const coverageName = `${seedOptions.layerId}-coverage`;
@@ -91,6 +97,8 @@ export class MapproxySeed {
         layerId: seedOptions.layerId,
         mode: seedOptions.mode,
         cacheBase: baseCache,
+        jobId,
+        taskId,
       });
       let cacheJson: Seed | Cleanup;
 
@@ -106,15 +114,17 @@ export class MapproxySeed {
 
       // check if its seed or clean and extend the base
       if (seedOptions.mode === SeedMode.SEED) {
-        cacheJson = this.getSeed(baseCache, seedOptions as ITaskSeedOptions);
+        cacheJson = this.getSeed(baseCache, seedOptions);
       } else {
-        cacheJson = this.getCleanup(baseCache, seedOptions as ITaskSeedOptions);
+        cacheJson = this.getCleanup(baseCache, seedOptions);
       }
       this.logger.debug({
         msg: `Created full cache object of type ${seedOptions.mode} to layer: ${seedOptions.layerId}`,
         layerId: seedOptions.layerId,
         mode: seedOptions.mode,
         cacheJson,
+        jobId,
+        taskId,
       });
 
       // generate coverage dataSource file from geometry
@@ -128,6 +138,8 @@ export class MapproxySeed {
         layerId: seedOptions.layerId,
         mode: seedOptions.mode,
         yamlSeed,
+        jobId,
+        taskId,
       });
       await fsp.writeFile(this.seedYamlDir, yamlSeed);
     } catch (err) {
@@ -135,6 +147,8 @@ export class MapproxySeed {
         msg: `Failed on generating seed yaml file type ${seedOptions.mode} to layer: ${seedOptions.layerId}`,
         layerId: seedOptions.layerId,
         mode: seedOptions.mode,
+        jobId,
+        taskId,
         err,
       });
       throw new Error(`unable to create seed.yaml file: ${(err as Error).message}`);
@@ -153,7 +167,7 @@ export class MapproxySeed {
     return coverage;
   }
 
-  private getBaseCache(seedOptions: ISeedBase, coverageName: string): BaseCache {
+  private getBaseCache(seedOptions: ISeed, coverageName: string): BaseCache {
     const baseCache: BaseCache = {
       caches: [seedOptions.layerId],
       coverages: [coverageName],
@@ -167,7 +181,7 @@ export class MapproxySeed {
     return jsonBaseCache;
   }
 
-  private getSeed(cache: BaseCache, seedOptions: ITaskSeedOptions): Seed {
+  private getSeed(cache: BaseCache, seedOptions: ISeed): Seed {
     const seed = {
       seeds: {
         [seedOptions.layerId]: {
@@ -183,7 +197,7 @@ export class MapproxySeed {
     return jsonSeeds;
   }
 
-  private getCleanup(cache: BaseCache, seedOptions: ITaskSeedOptions): Cleanup {
+  private getCleanup(cache: BaseCache, seedOptions: ISeed): Cleanup {
     const cleanup = {
       cleanups: {
         [seedOptions.layerId]: {
@@ -199,19 +213,19 @@ export class MapproxySeed {
     return jsonSeeds;
   }
 
-  private async writeMapproxyYaml(): Promise<void> {
+  private async writeMapproxyYaml(jobId: string, taskId: string): Promise<void> {
     try {
-      this.logger.info({ msg: `Generating current mapproxy config yaml to: ${this.mapproxyYamlDir}` });
+      this.logger.info({ msg: `Generating current mapproxy config yaml to: ${this.mapproxyYamlDir}`, jobId, taskId });
       const currentMapproxyConfig = await this.mapproxyConfigClient.getConfig();
-      this.logger.debug({ msg: `current mapproxy yaml config`, mapproxyYaml: currentMapproxyConfig });
+      this.logger.debug({ msg: `current mapproxy yaml config`, mapproxyYaml: currentMapproxyConfig, jobId, taskId });
       await fsp.writeFile(this.mapproxyYamlDir, currentMapproxyConfig as string, 'utf8');
     } catch (err) {
-      this.logger.error({ msg: `Failed on generating mapproxy current yaml`, err });
+      this.logger.error({ msg: `Failed on generating mapproxy current yaml`, jobId, taskId, err });
       throw new Error(`Failed on generating mapproxy current yaml`);
     }
   }
 
-  private async executeSeed(options: ISeedBase): Promise<void> {
+  private async executeSeed(options: ISeed, jobId: string, taskId: string): Promise<void> {
     try {
       const flags = [
         '-f', // mapproxy yaml directory
@@ -238,7 +252,7 @@ export class MapproxySeed {
         this.logger.debug(str);
       }
     } catch (err) {
-      this.logger.error({ msg: `failed to generate tiles`, err });
+      this.logger.error({ msg: `failed to generate tiles`, jobId, taskId, err });
       throw err;
     }
   }

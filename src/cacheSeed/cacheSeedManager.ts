@@ -2,7 +2,7 @@ import { Logger } from '@map-colonies/js-logger';
 import { inject, singleton } from 'tsyringe';
 import { OperationStatus, ITaskResponse } from '@map-colonies/mc-priority-queue';
 import { SERVICES } from '../common/constants';
-import { IConfig, IJobParams, ITaskParams, ISeedBase } from '../common/interfaces';
+import { IConfig, IJobParams, ITaskParams, ISeed } from '../common/interfaces';
 import { MapproxySeed } from '../mapproxyUtils/mapproxySeed';
 import { QueueClient } from '../clients/queueClient';
 import { CacheType, SeedMode } from '../common/enums';
@@ -76,7 +76,7 @@ export class CacheSeedManager {
     return Boolean(tilesTask);
   }
 
-  private async runTask(seedTasks: ISeedBase[], jobId: string, taskId: string): Promise<void> {
+  private async runTask(seedTasks: ISeed[], jobId: string, taskId: string): Promise<void> {
     for (const task of seedTasks) {
       // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
       if (task.mode === SeedMode.SEED || task.mode === SeedMode.CLEAN) {

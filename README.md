@@ -53,7 +53,7 @@ Each job (tileSeeding) include single task (tileSeeding) that include array of m
 
 ## Run Locally
 ### Prerequisites
-1. python =<3.8 
+1. python >=3.8 
 2. install mapproxy (current v.1.16) or follow [here](https://mapproxy.org/docs/latest/install.html)
 
 ```bash

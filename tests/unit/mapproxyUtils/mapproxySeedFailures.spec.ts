@@ -8,7 +8,7 @@ import { getApp } from '../../../src/app';
 import { getTask } from '../../mockData/testStaticData';
 import { getContainerConfig, resetContainer } from '../testContainerConfig';
 import { MapproxySeed } from '../../../src/mapproxyUtils/mapproxySeed';
-import { IQueueConfig, ITaskSeedOptions } from '../../../src/common/interfaces';
+import { IQueueConfig, ISeed } from '../../../src/common/interfaces';
 import { MapproxyConfigClient } from '../../../src/clients/mapproxyConfig';
 
 // most configured before describes
@@ -188,11 +188,7 @@ describe('#MapproxySeed', () => {
         const executeSeedSpy = jest.spyOn(MapproxySeed.prototype as unknown as { executeSeed: jest.Mock }, 'executeSeed');
 
         const action = async () => {
-          await mapproxySeed.runSeed(
-            { ...task.parameters.seedTasks[0], refreshBefore: 'badDate' } as unknown as ITaskSeedOptions,
-            task.jobId,
-            task.id
-          );
+          await mapproxySeed.runSeed({ ...task.parameters.seedTasks[0], refreshBefore: 'badDate' } as unknown as ISeed, task.jobId, task.id);
         };
 
         await expect(action).rejects.toThrow(

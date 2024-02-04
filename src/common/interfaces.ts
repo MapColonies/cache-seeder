@@ -71,7 +71,7 @@ export interface IMapProxyConfig {
   globals: IMapProxyGlobalConfig;
 }
 
-export interface ISeedBase {
+export interface ISeed {
   mode: SeedMode;
   grid: string;
   fromZoomLevel: number;
@@ -79,18 +79,11 @@ export interface ISeedBase {
   geometry: GeoJSON;
   skipUncached: boolean;
   layerId: string; // cache name as configured in mapproxy
-}
-
-export interface ITaskSeedOptions extends ISeedBase {
   refreshBefore: string;
 }
 
-export interface ITaskSeedCleanOptions extends ISeedBase {
-  remove_before: string;
-}
-
 export interface ITaskParams {
-  seedTasks: ISeedBase[];
+  seedTasks: ISeed[];
   catalogId: string;
   spanId: string;
   cacheType: CacheType;
