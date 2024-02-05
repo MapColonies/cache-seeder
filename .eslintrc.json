@@ -1,5 +1,5 @@
 {
-  "ignorePatterns": ["**/*.js", "dist", "tests/unit/mapproxyUtils", "helm", "coverage", "reports", ".husky"],
+  "ignorePatterns": ["**/*.js", "dist", "tests/unit/mapproxyUtils", "tests/mockData", "helm", "coverage", "reports", ".husky"],
   "extends": ["@map-colonies/eslint-config/jest", "@map-colonies/eslint-config/ts-base"],
   "parserOptions": {
     "project": "./tsconfig.lint.json"

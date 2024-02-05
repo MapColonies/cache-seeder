@@ -6,11 +6,11 @@
 
 ![grade-badge-lgtm](https://img.shields.io/lgtm/grade/javascript/github/MapColonies/cache-seeder?style=for-the-badge)
 
-![snyk](https://img.shields.io/snyk/vulnerabilities/github/MapColonies/cache-seeder?style=for-the-badge)
+![snyk](https://snyk.io/test/github/MapColonies/cache-seeder/badge.svg)
 
 ----------------------------------
 
-This is the Worker that responsible for tracking layer's update and seeding\cleaning cache on redis automatically by job-tasks polling
+This worker is responsible for tracking layer's update and seeding\cleaning cache on redis automatically by job-tasks polling
 
 Ingestion has an “Update” mode that updates tiles in storage (FS, S3).
 We use redis cache in order to serve tiles faster and reduce the load on our services.
@@ -24,7 +24,7 @@ Each job (tileSeeding) include single task (tileSeeding) that include array of m
 <br />
 
 ## Seed Task Parameters Structure
-| Field | What is it    | Mandatory   | Type |
+| Field | What is it | Mandatory   | Type |
 | :---:   | :---: | :---: | :---: |
 | jobId | original jobId of ingestion\update job | + | UUID |
 | spanId | spanId of ingestion\update job | + | UUID |

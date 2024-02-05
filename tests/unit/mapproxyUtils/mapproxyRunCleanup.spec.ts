@@ -1,50 +1,18 @@
 import { readFileSync, promises as fsp } from 'node:fs';
 import jsLogger from '@map-colonies/js-logger';
 import nock from 'nock';
-import * as zx from 'zx';
 import { IHttpRetryConfig } from '@map-colonies/mc-utils';
 import { configMock, init as initConfig, clear as clearConfig, setValue } from '../../mocks/config';
 import { getApp } from '../../../src/app';
-import { getTask } from '../../mockData/testStaticData';
+import { cmdProcessPromise, getTask } from '../../mockData/testStaticData';
 import { getContainerConfig, resetContainer } from '../testContainerConfig';
 import { MapproxySeed } from '../../../src/mapproxyUtils/mapproxySeed';
 import { IQueueConfig } from '../../../src/common/interfaces';
 import { MapproxyConfigClient } from '../../../src/clients/mapproxyConfig';
-import { ProcessOutput, ProcessPromise, $ } from 'zx';
-import { Readable, Writable } from 'stream';
-import { ChildProcess } from 'child_process';
+import { $ } from 'zx';
 
 let mapproxyConfigClient: MapproxyConfigClient;
 let mapproxySeed: MapproxySeed;
-const readable = Readable.from(['some test data', 'some test data2']);
-const cmdProcessPromise: ProcessPromise<ProcessOutput> = {
-  stdout: readable,
-  child: new ChildProcess(),
-  stdin: new Writable(),
-  stderr: new Readable(),
-  exitCode: Promise.resolve(0),
-  pipe: function (dest: zx.ProcessPromise<zx.ProcessOutput> | Writable): zx.ProcessPromise<zx.ProcessOutput> {
-    throw new Error('Function not implemented.');
-  },
-  kill: function (signal?: string | number | undefined): Promise<void> {
-    throw new Error('Function not implemented.');
-  },
-  then: function <TResult1 = zx.ProcessOutput, TResult2 = never>(
-    onfulfilled?: ((value: zx.ProcessOutput) => TResult1 | PromiseLike<TResult1>) | null | undefined,
-    onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | null | undefined
-  ): Promise<TResult1 | TResult2> {
-    throw new Error('Function not implemented.');
-  },
-  catch: function <TResult = never>(
-    onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | null | undefined
-  ): Promise<zx.ProcessOutput | TResult> {
-    throw new Error('Function not implemented.');
-  },
-  finally: function (onfinally?: (() => void) | null | undefined): Promise<zx.ProcessOutput> {
-    throw new Error('Function not implemented.');
-  },
-  [Symbol.toStringTag]: '',
-};
 
 jest.mock('zx', () => ({
   $: jest.fn().mockImplementation(() => cmdProcessPromise),

@@ -58,18 +58,17 @@ export class CacheSeedManager {
       });
       await this.queueClient.queueHandlerForTileSeedingTasks.reject(jobId, taskId, false);
       await this.queueClient.queueHandlerForTileSeedingTasks.jobManagerClient.updateJob(jobId, { status: OperationStatus.FAILED });
-    } else {
-      try {
-        // will handle Seed-Clean task
-        await this.runTask(seeds, jobId, taskId);
-        await this.queueClient.queueHandlerForTileSeedingTasks.ack(jobId, taskId);
-        await this.queueClient.queueHandlerForTileSeedingTasks.jobManagerClient.updateJob(jobId, {
-          status: OperationStatus.COMPLETED,
-          percentage: 100,
-        });
-      } catch (error) {
-        await this.queueClient.queueHandlerForTileSeedingTasks.reject(jobId, taskId, true, (error as Error).message);
-      }
+      return false;
+    }
+    try {
+      await this.runTask(seeds, jobId, taskId);
+      await this.queueClient.queueHandlerForTileSeedingTasks.ack(jobId, taskId);
+      await this.queueClient.queueHandlerForTileSeedingTasks.jobManagerClient.updateJob(jobId, {
+        status: OperationStatus.COMPLETED,
+        percentage: 100,
+      });
+    } catch (error) {
+      await this.queueClient.queueHandlerForTileSeedingTasks.reject(jobId, taskId, true, (error as Error).message);
     }
 
     // complete the current pool
@@ -80,13 +79,6 @@ export class CacheSeedManager {
     for (const task of seedTasks) {
       // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
       if (task.mode === SeedMode.SEED || task.mode === SeedMode.CLEAN) {
-        this.logger.info({
-          msg: `Found ${task.mode} task for job: ${jobId} task: ${taskId}`,
-          mode: task.mode,
-          layerId: task.layerId,
-          jobId,
-          taskId,
-        });
         await this.mapproxySeed.runSeed(task, jobId, taskId);
       } else {
         this.logger.error({

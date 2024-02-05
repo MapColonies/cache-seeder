@@ -53,8 +53,7 @@ export class MapproxySeed {
         throw new Error(`from zoom level value cannot be bigger than to zoom level value`);
       }
 
-      const seedingDate = task.refreshBefore;
-      if (!isValidDateFormat(seedingDate)) {
+      if (!isValidDateFormat(task.refreshBefore)) {
         throw new Error(`Date string must be 'ISO_8601' format: yyyy-MM-dd'T'HH:mm:ss, for example: 2023-11-07T12:35:00`);
       }
 
