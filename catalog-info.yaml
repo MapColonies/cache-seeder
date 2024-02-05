@@ -2,7 +2,7 @@ apiVersion: backstage.io/v1alpha1
 kind: Component
 metadata:
   name: cache-seeder
-  description: This is worker that responsible execute seed&clean job for mapproxy redis caches wrapping mapproxy-utils package
+  description: This worker is responsible for execute seed&clean job for mapproxy redis caches wrapping mapproxy-utils package
   annotations:
     github.com/project-slug: MapColonies/cache-seeder
   tags:
@@ -16,4 +16,4 @@ spec:
   type: service
   lifecycle: production
   owner: RasterTeam
-  system: Discrete-ingestion
+  system: Ingestion
