@@ -23,6 +23,31 @@
         "enabled": true,
         "options": null
       }
+    },
+    "httpRetry": {
+      "attempts": 5,
+      "delay": "exponential",
+      "shouldResetTimeout": true,
+      "disableHttpClientLogs": true
     }
-  }
+  },
+  "queue": {
+    "jobManagerBaseUrl": "http://localhost:8088",
+    "heartbeat": {
+      "heartbeatManagerBaseUrl": "http://localhost:8083",
+      "heartbeatIntervalMs": 3000
+    },
+    "dequeueIntervalMs": 1000,
+    "jobType": "TilesSeeding",
+    "tilesTaskType": "TilesSeeding"
+  },
+  "mapproxy": {
+    "mapproxyApiUrl": "http://localhost:8086",
+    "mapproxyYamlDir": "/mapproxy/mapproxy.yaml",
+    "seedYamlDir": "/mapproxy/seed.yaml",
+    "geometryTxtFile": "/mapproxy/coverage.json",
+    "seedProgressFileDir": "/mapproxy/mapproxy_seed_progress"
+  },
+  "seedAttempts": 5,
+  "seedConcurrency": 5
 }

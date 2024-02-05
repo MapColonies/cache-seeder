@@ -38,5 +38,35 @@
         }
       }
     }
+  },
+  "queue": {
+    "jobManagerBaseUrl": "QUEUE_JOB_MANAGER_BASE_URL",
+    "heartbeat": {
+      "heartbeatManagerBaseUrl": "QUEUE_HEART_BEAT_MANAGER_BASE_URL",
+      "heartbeatIntervalMs": {
+        "__name": "QUEUE_HEART_BEAT_INTERVAL_MS",
+        "__format": "number"
+      }
+    },
+    "dequeueIntervalMs": {
+      "__name": "QUEUE_DEQUEUE_INTERVAL_MS",
+      "__format": "number"
+    },
+    "jobType": "QUEUE_JOB_TYPE",
+    "tilesTaskType": "QUEUE_TASK_TYPE"
+  },
+  "mapproxy": {
+    "mapproxyApiUrl": "MAPPROXY_API_URL",
+    "mapproxyYamlDir": "MAPPROXY_YAML_DIR",
+    "seedYamlDir": "SEED_YAML_DIR",
+    "geometryTxtFile": "GEOMETRY_TXT_FILE"
+  },
+  "seedAttempts": {
+    "__name": "SEED_ATTEMPTS",
+    "__format": "number"
+  },
+  "seedConcurrency": {
+    "__name": "SEED_CONCURRENCY",
+    "__format": "number"
   }
 }

@@ -1,0 +1,17 @@
+cleanups:
+  test:
+    caches:
+    - test
+    coverages:
+    - test-coverage
+    grids:
+    - wgs84
+    levels:
+      from: 0
+      to: 21
+    remove_before:
+      time: '2025-01-16T16:14:22'
+coverages:
+  test-coverage:
+    datasource: /mapproxy/coverage.json
+    srs: EPSG:4326
