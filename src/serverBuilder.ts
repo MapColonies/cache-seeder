@@ -34,7 +34,6 @@ export class ServerBuilder {
 
     this.serverInstance.use(bodyParser.json(this.config.get<bodyParser.Options>('server.request.payload')));
     this.serverInstance.use(getTraceContexHeaderMiddleware());
-
   }
 
   private registerPostRoutesMiddleware(): void {

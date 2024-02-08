@@ -9,7 +9,6 @@ export interface IConfig {
   has: (setting: string) => boolean;
 }
 
-
 export interface IQueueConfig {
   jobManagerBaseUrl: string;
   heartbeat: IHeartbeatConfig;
