@@ -9,12 +9,6 @@ export interface IConfig {
   has: (setting: string) => boolean;
 }
 
-export interface OpenApiConfig {
-  filePath: string;
-  basePath: string;
-  jsonPath: string;
-  uiPath: string;
-}
 
 export interface IQueueConfig {
   jobManagerBaseUrl: string;
