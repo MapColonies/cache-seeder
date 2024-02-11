@@ -7,14 +7,23 @@ global:
     tilesStorageProvider: ""
     s3:
       secretName: ""
+    fs:
+      internalPvc:
+        name: ""
+        tilesSubPath: ""
 
-storage:
+storage: # local service level
   tilesStorageProvider: ""
   s3:
     secretName: ""
     createSecret: false
     accessKeyId: # used only when creating secret (when secretName is empty)
     secretAccessKey: # used only when creating secret (when secretName is empty)
+  fs:
+    internalPvc:
+      name: ""
+      mountPath: ""
+      tilesSubPath: ""
 
 secretName: ""
 enabled: true
@@ -89,7 +98,7 @@ env:
     heartbeat:
       heartbeatManagerBaseUrl: "http://localhost:8089"
       heartbeatIntervalMs: 3000
-    dequeueIntervalMs: 1000
+    dequeueIntervalMs: 2000
     jobType: "TilesSeeding"
     tilesTaskType: "TilesSeeding"
   mapproxy:
@@ -100,7 +109,7 @@ env:
 resources:
   enabled: true
   value:
-    limits: #
+    limits:
       cpu: 500m
       memory: 500Mi
     requests:

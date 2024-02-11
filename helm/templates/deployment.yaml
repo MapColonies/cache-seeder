@@ -6,6 +6,7 @@
 {{- $imageTag := include "cache-seeder.tag" . -}}
 {{- $storage := (include "common.storage.merged" .) | fromYaml }}
 {{- $s3 := (include "common.s3.merged" .) | fromYaml }}
+{{- $fs := (include "common.fs.merged" .) | fromYaml }}
 
 {{- if .Values.enabled -}}
 apiVersion: apps/v1
@@ -62,12 +63,17 @@ spec:
           {{- end }}
           volumeMounts:
             {{- if .Values.caSecretName }}
-            - mountPath: {{ printf "%s/%s" .Values.caPath .Values.caKey | quote }}
-              name: root-ca
+            - name: root-ca
+              mountPath: {{ printf "%s/%s" .Values.caPath .Values.caKey | quote }}
               subPath: {{ quote .Values.caKey }}
             {{- end }}
             {{- if .Values.extraVolumeMounts -}}
               {{ toYaml .Values.extraVolumeMounts | nindent 12 }}
+            {{- end }}
+            {{- if eq (upper $storage.tilesStorageProvider) "FS" }}
+            - name: output-storage
+              mountPath: {{ $fs.internalPvc.mountPath }}
+              subPath: {{ $fs.internalPvc.tilesSubPath }}
             {{- end }}
           env:
             - name: SERVER_PORT
@@ -134,7 +140,12 @@ spec:
           secret:
             secretName: {{ .Values.caSecretName }}
         {{- end }}
+        {{- if eq (upper $storage.tilesStorageProvider) "FS" }}
+        - name: output-storage
+          persistentVolumeClaim:
+            claimName: {{ $fs.internalPvc.name }}
+        {{- end }}
         {{- if .Values.extraVolumes -}}
           {{ tpl (toYaml .Values.extraVolumes) . | nindent 8 }}
-        {{- end }}    
+        {{- end }}
 {{- end -}}

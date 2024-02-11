@@ -21,16 +21,9 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Set File name
-        uses: myci-actions/export-env-var@1
-        with:
-          name: P_COLLECTION_FILE_NAME
-          value: ${{ steps.package.outputs.name }}-v${{ steps.package.outputs.version }}-postman-collection.json
-
       - name: Publish Release to Github
         uses: softprops/action-gh-release@v1
         with:
           body_path: CHANGELOG.md
-          files: ${{ env.P_COLLECTION_FILE_NAME }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

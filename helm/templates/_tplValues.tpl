@@ -52,3 +52,7 @@ Custom definitions
 {{- define "common.s3.merged" -}}
 {{- include "common.tplvalues.merge" ( dict "values" ( list .Values.storage.s3 .Values.global.storage.s3 ) "context" . ) }}
 {{- end -}}
+
+{{- define "common.fs.merged" -}}
+{{- include "common.tplvalues.merge" ( dict "values" ( list .Values.storage.fs .Values.global.storage.fs ) "context" . ) }}
+{{- end -}}
