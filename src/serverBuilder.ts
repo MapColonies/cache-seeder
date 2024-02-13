@@ -2,7 +2,6 @@ import express from 'express';
 import bodyParser from 'body-parser';
 import compression from 'compression';
 import { getErrorHandlerMiddleware } from '@map-colonies/error-express-handler';
-import { middleware as OpenApiMiddleware } from 'express-openapi-validator';
 import { inject, injectable } from 'tsyringe';
 import { Logger } from '@map-colonies/js-logger';
 import httpLogger from '@map-colonies/express-access-log-middleware';
@@ -35,10 +34,6 @@ export class ServerBuilder {
 
     this.serverInstance.use(bodyParser.json(this.config.get<bodyParser.Options>('server.request.payload')));
     this.serverInstance.use(getTraceContexHeaderMiddleware());
-
-    const ignorePathRegex = new RegExp(`^${this.config.get<string>('openapiConfig.basePath')}/.*`, 'i');
-    const apiSpecPath = this.config.get<string>('openapiConfig.filePath');
-    this.serverInstance.use(OpenApiMiddleware({ apiSpec: apiSpecPath, validateRequests: true, ignorePaths: ignorePathRegex }));
   }
 
   private registerPostRoutesMiddleware(): void {

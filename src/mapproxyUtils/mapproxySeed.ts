@@ -243,8 +243,8 @@ export class MapproxySeed {
         flags.push('--skip-uncached');
       }
       const cmd = $`mapproxy-seed ${flags}`;
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
       for await (const chunk of cmd.stdout) {
         // todo - implement on next phase progressPercentage calculate logic
         const str: string = (chunk as Buffer).toString('utf8');

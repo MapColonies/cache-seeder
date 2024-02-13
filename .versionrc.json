@@ -1,10 +1,6 @@
 {
   "bumpFiles": [
     {
-      "filename": "openapi3.yaml",
-      "updater": "node_modules/@map-colonies/standard-version-update-openapi3-version/src/index.js"
-    },
-    {
       "filename": "package.json",
       "type": "json"
     },

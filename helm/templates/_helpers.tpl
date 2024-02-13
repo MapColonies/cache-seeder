@@ -1,7 +1,7 @@
 {{/*
 Expand the name of the chart.
 */}}
-{{- define "ts-server-boilerplate.name" -}}
+{{- define "cache-seeder.name" -}}
 {{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 
@@ -10,7 +10,7 @@ Create a default fully qualified app name.
 We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
 If release name contains chart name it will be used as a full name.
 */}}
-{{- define "ts-server-boilerplate.fullname" -}}
+{{- define "cache-seeder.fullname" -}}
 {{- if .Values.fullnameOverride -}}
 {{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" -}}
 {{- else -}}
@@ -26,16 +26,16 @@ If release name contains chart name it will be used as a full name.
 {{/*
 Create chart name and version as used by the chart label.
 */}}
-{{- define "ts-server-boilerplate.chart" -}}
+{{- define "cache-seeder.chart" -}}
 {{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
 {{/*
 Common labels
 */}}
-{{- define "ts-server-boilerplate.labels" -}}
-helm.sh/chart: {{ include "ts-server-boilerplate.chart" . }}
-{{ include "ts-server-boilerplate.selectorLabels" . }}
+{{- define "cache-seeder.labels" -}}
+helm.sh/chart: {{ include "cache-seeder.chart" . }}
+{{ include "cache-seeder.selectorLabels" . }}
 {{- if .Chart.AppVersion }}
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 {{- end }}
@@ -45,22 +45,22 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{/*
 Returns the tag of the chart.
 */}}
-{{- define "ts-server-boilerplate.tag" -}}
+{{- define "cache-seeder.tag" -}}
 {{- default (printf "v%s" .Chart.AppVersion) .Values.image.tag }}
 {{- end }}
 
 {{/*
 Selector labels
 */}}
-{{- define "ts-server-boilerplate.selectorLabels" -}}
-app.kubernetes.io/name: {{ include "ts-server-boilerplate.name" . }}
+{{- define "cache-seeder.selectorLabels" -}}
+app.kubernetes.io/name: {{ include "cache-seeder.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 
 {{/*
 Returns the environment from global if exists or from the chart's values, defaults to development
 */}}
-{{- define "ts-server-boilerplate.environment" -}}
+{{- define "cache-seeder.environment" -}}
 {{- if .Values.global.environment }}
     {{- .Values.global.environment -}}
 {{- else -}}
@@ -71,7 +71,7 @@ Returns the environment from global if exists or from the chart's values, defaul
 {{/*
 Returns the cloud provider name from global if exists or from the chart's values, defaults to minikube
 */}}
-{{- define "ts-server-boilerplate.cloudProviderFlavor" -}}
+{{- define "cache-seeder.cloudProviderFlavor" -}}
 {{- if .Values.global.cloudProvider.flavor }}
     {{- .Values.global.cloudProvider.flavor -}}
 {{- else if .Values.cloudProvider -}}
@@ -84,7 +84,7 @@ Returns the cloud provider name from global if exists or from the chart's values
 {{/*
 Returns the cloud provider docker registry url from global if exists or from the chart's values
 */}}
-{{- define "ts-server-boilerplate.cloudProviderDockerRegistryUrl" -}}
+{{- define "cache-seeder.cloudProviderDockerRegistryUrl" -}}
 {{- if .Values.global.cloudProvider.dockerRegistryUrl }}
     {{- printf "%s/" .Values.global.cloudProvider.dockerRegistryUrl -}}
 {{- else if .Values.cloudProvider.dockerRegistryUrl -}}
@@ -96,7 +96,7 @@ Returns the cloud provider docker registry url from global if exists or from the
 {{/*
 Returns the cloud provider image pull secret name from global if exists or from the chart's values
 */}}
-{{- define "ts-server-boilerplate.cloudProviderImagePullSecretName" -}}
+{{- define "cache-seeder.cloudProviderImagePullSecretName" -}}
 {{- if .Values.global.cloudProvider.imagePullSecretName }}
     {{- .Values.global.cloudProvider.imagePullSecretName -}}
 {{- else if .Values.cloudProvider.imagePullSecretName -}}
@@ -107,7 +107,7 @@ Returns the cloud provider image pull secret name from global if exists or from 
 {{/*
 Returns the tracing url from global if exists or from the chart's values
 */}}
-{{- define "ts-server-boilerplate.tracingUrl" -}}
+{{- define "cache-seeder.tracingUrl" -}}
 {{- if .Values.global.tracing.url }}
     {{- .Values.global.tracing.url -}}
 {{- else if .Values.cloudProvider -}}
@@ -118,7 +118,7 @@ Returns the tracing url from global if exists or from the chart's values
 {{/*
 Returns the tracing url from global if exists or from the chart's values
 */}}
-{{- define "ts-server-boilerplate.metricsUrl" -}}
+{{- define "cache-seeder.metricsUrl" -}}
 {{- if .Values.global.metrics.url }}
     {{- .Values.global.metrics.url -}}
 {{- else -}}

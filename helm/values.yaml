@@ -3,7 +3,29 @@ global:
   tracing: {}
   metrics: {}
   environment: ''
+  storage:
+    tilesStorageProvider: ""
+    s3:
+      secretName: ""
+    fs:
+      internalPvc:
+        name: ""
+        tilesSubPath: ""
 
+storage: # local service level
+  tilesStorageProvider: ""
+  s3:
+    secretName: ""
+    createSecret: false
+    accessKeyId: # used only when creating secret (when secretName is empty)
+    secretAccessKey: # used only when creating secret (when secretName is empty)
+  fs:
+    internalPvc:
+      name: ""
+      mountPath: ""
+      tilesSubPath: ""
+
+secretName: ""
 enabled: true
 environment: development
 replicaCount: 1
@@ -53,9 +75,9 @@ caPath: '/usr/local/share/ca-certificates'
 caKey: 'ca.crt'
 
 image:
-  repository: ts-server-boilerplate
+  repository: cache-seeder
   tag: 'latest'
-  pullPolicy: IfNotPresent
+  pullPolicy: Always
 
 env:
   port: 8080
@@ -71,38 +93,26 @@ env:
   metrics:
     enabled: false
     url: http://localhost:55681/v1/metrics
+  queue:
+    jobManagerBaseUrl: "http://localhost:8081"
+    heartbeat:
+      heartbeatManagerBaseUrl: "http://localhost:8089"
+      heartbeatIntervalMs: 3000
+    dequeueIntervalMs: 2000
+    jobType: "TilesSeeding"
+    tilesTaskType: "TilesSeeding"
+  mapproxy:
+    mapproxyApiUrl: "http://localhost:8083"
+  seedAttempts: 5
+  seedConcurrency: 5
 
 resources:
   enabled: true
   value:
     limits:
-      cpu: 100m
-      memory: 128Mi
+      cpu: 500m
+      memory: 500Mi
     requests:
-      cpu: 100m
-      memory: 128Mi
+      cpu: 500m
+      memory: 500Mi
 
-route:
-  enabled: true
-  path: /
-  host: 
-  timeout:
-    enabled: false # defaults to 30s by openshift
-    duration: 60s # supported units (us, ms, s, m, h, d)
-  rewriteTarget: ''
-  tls:
-    enabled: true
-    termination: edge
-    insecureEdgeTerminationPolicy: Redirect
-    useCerts: false
-    certificate: ''
-    key: ''
-    caCertificate: ''
-
-ingress:
-  enabled: false
-  path: /
-  host: 'localhost'
-  cors:
-    enabled: true
-    origin: '*'

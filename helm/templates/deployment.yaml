@@ -1,20 +1,24 @@
 {{- $releaseName := .Release.Name -}}
-{{- $chartName := include "ts-server-boilerplate.name" . -}}
-{{- $cloudProviderFlavor := include "ts-server-boilerplate.cloudProviderFlavor" . -}}
-{{- $cloudProviderDockerRegistryUrl := include "ts-server-boilerplate.cloudProviderDockerRegistryUrl" . -}}
-{{- $cloudProviderImagePullSecretName := include "ts-server-boilerplate.cloudProviderImagePullSecretName" . -}}
-{{- $imageTag := include "ts-server-boilerplate.tag" . -}}
+{{- $chartName := include "cache-seeder.name" . -}}
+{{- $cloudProviderFlavor := include "cache-seeder.cloudProviderFlavor" . -}}
+{{- $cloudProviderDockerRegistryUrl := include "cache-seeder.cloudProviderDockerRegistryUrl" . -}}
+{{- $cloudProviderImagePullSecretName := include "cache-seeder.cloudProviderImagePullSecretName" . -}}
+{{- $imageTag := include "cache-seeder.tag" . -}}
+{{- $storage := (include "common.storage.merged" .) | fromYaml }}
+{{- $s3 := (include "common.s3.merged" .) | fromYaml }}
+{{- $fs := (include "common.fs.merged" .) | fromYaml }}
+
 {{- if .Values.enabled -}}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ printf "%s-deployment" (include "ts-server-boilerplate.fullname" .) }}
+  name: {{ printf "%s-deployment" (include "cache-seeder.fullname" .) }}
   labels:
     app: {{ $chartName }}
     component: {{ $chartName }}
-    environment: {{ include "ts-server-boilerplate.environment" . }}
+    environment: {{ include "cache-seeder.environment" . }}
     release: {{ $releaseName }}
-    {{- include "ts-server-boilerplate.labels" . | nindent 4 }}
+    {{- include "cache-seeder.labels" . | nindent 4 }}
 spec:
   replicas: {{ .Values.replicaCount }}
   revisionHistoryLimit: {{ .Values.revisionHistoryLimit }}
@@ -23,14 +27,14 @@ spec:
       app: {{ $chartName }}
       release: {{ $releaseName }}
       run: {{ $releaseName }}-{{ $chartName }}
-      {{- include "ts-server-boilerplate.selectorLabels" . | nindent 6 }}
+      {{- include "cache-seeder.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       labels:
         app: {{ $chartName }}
         release: {{ $releaseName }}
         run: {{ $releaseName }}-{{ $chartName }}
-        {{- include "ts-server-boilerplate.selectorLabels" . | nindent 8 }}
+        {{- include "cache-seeder.selectorLabels" . | nindent 8 }}
       annotations:
       {{- if .Values.resetOnConfigChange }}
         checksum/configmap: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
@@ -59,12 +63,17 @@ spec:
           {{- end }}
           volumeMounts:
             {{- if .Values.caSecretName }}
-            - mountPath: {{ printf "%s/%s" .Values.caPath .Values.caKey | quote }}
-              name: root-ca
+            - name: root-ca
+              mountPath: {{ printf "%s/%s" .Values.caPath .Values.caKey | quote }}
               subPath: {{ quote .Values.caKey }}
             {{- end }}
             {{- if .Values.extraVolumeMounts -}}
               {{ toYaml .Values.extraVolumeMounts | nindent 12 }}
+            {{- end }}
+            {{- if eq (upper $storage.tilesStorageProvider) "FS" }}
+            - name: output-storage
+              mountPath: {{ $fs.internalPvc.mountPath }}
+              subPath: {{ $fs.internalPvc.tilesSubPath }}
             {{- end }}
           env:
             - name: SERVER_PORT
@@ -74,6 +83,18 @@ spec:
               value: {{ printf "%s/%s" .Values.caPath .Values.caKey | quote }}
             - name: NODE_EXTRA_CA_CERTS
               value: {{ printf "[%s/%s]" .Values.caPath .Values.caKey | quote }}
+            {{- end }}
+            {{- if eq (upper $storage.tilesStorageProvider) "S3" }}
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $s3.secretName }}
+                  key: accessKeyId
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $s3.secretName }}
+                  key: secretAccessKey
             {{- end }}
             {{- if .Values.extraEnvVars }}
             {{- toYaml .Values.extraEnvVars | nindent 12 }}
@@ -119,7 +140,12 @@ spec:
           secret:
             secretName: {{ .Values.caSecretName }}
         {{- end }}
+        {{- if eq (upper $storage.tilesStorageProvider) "FS" }}
+        - name: output-storage
+          persistentVolumeClaim:
+            claimName: {{ $fs.internalPvc.name }}
+        {{- end }}
         {{- if .Values.extraVolumes -}}
           {{ tpl (toYaml .Values.extraVolumes) . | nindent 8 }}
-        {{- end }}    
+        {{- end }}
 {{- end -}}

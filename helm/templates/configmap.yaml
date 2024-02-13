@@ -1,10 +1,11 @@
-{{- $tracingUrl := include "ts-server-boilerplate.tracingUrl" . -}}
-{{- $metricsUrl := include "ts-server-boilerplate.metricsUrl" . -}}
+{{- $tracingUrl := include "cache-seeder.tracingUrl" . -}}
+{{- $metricsUrl := include "cache-seeder.metricsUrl" . -}}
+{{- $configmapName := include "configmap.fullname" . }}
 {{- if .Values.enabled -}}
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ printf "%s-configmap" (include "ts-server-boilerplate.fullname" .) }}
+  name: {{ $configmapName }}
 data:
   REQUEST_PAYLOAD_LIMIT: {{ .Values.env.requestPayloadLimit | quote }}
   RESPONSE_COMPRESSION_ENABLED: {{ .Values.env.responseCompressionEnabled | quote }}
@@ -19,4 +20,13 @@ data:
   TELEMETRY_METRICS_URL: {{ $metricsUrl }}
   {{ end }}
   npm_config_cache: /tmp/
+  QUEUE_JOB_MANAGER_BASE_URL: {{ .Values.env.queue.jobManagerBaseUrl | quote}}
+  QUEUE_HEART_BEAT_MANAGER_BASE_URL: {{ .Values.env.queue.heartbeat.heartbeatManagerBaseUrl | quote}}
+  QUEUE_HEART_BEAT_INTERVAL_MS: {{ .Values.env.queue.heartbeat.heartbeatIntervalMs | quote}}
+  QUEUE_DEQUEUE_INTERVAL_MS: {{ .Values.env.queue.dequeueIntervalMs | quote}}
+  QUEUE_JOB_TYPE: {{ .Values.env.queue.jobType | quote}}
+  QUEUE_TASK_TYPE: {{ .Values.env.queue.tilesTaskType | quote}}
+  MAPPROXY_API_URL: {{ .Values.env.mapproxy.mapproxyApiUrl | quote}}
+  SEED_ATTEMPTS: {{ .Values.env.seedAttempts | quote}}
+  SEED_CONCURRENCY: {{ .Values.env.seedConcurrency | quote}}
 {{- end }}
