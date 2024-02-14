@@ -1,8 +1,13 @@
 /* eslint-disable @typescript-eslint/naming-convention */
-
 import { GeoJSON } from 'geojson';
-import { JsonObject } from 'swagger-ui-express';
 import { CacheType, SeedMode } from './enums';
+
+type JSONValue = string | number | boolean | JSONObject | JSONArray;
+interface JSONArray extends Array<JSONValue> {}
+
+export interface JSONObject {
+  [x: string]: JSONValue;
+}
 
 export interface IConfig {
   get: <T>(setting: string) => T;
@@ -57,10 +62,10 @@ export interface IMapProxyGlobalConfig {
 }
 
 export interface IMapProxyConfig {
-  services: JsonObject;
+  services: JSONObject;
   layers: IMapProxyLayer[];
   caches: IMapProxyCache;
-  grids: JsonObject;
+  grids: JSONObject;
   globals: IMapProxyGlobalConfig;
 }
 
