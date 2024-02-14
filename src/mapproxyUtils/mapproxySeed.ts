@@ -1,5 +1,5 @@
 import { promises as fsp } from 'node:fs';
-import { $ } from 'zx';
+import { $, ProcessOutput } from 'zx';
 import { dump } from 'js-yaml';
 import { Logger } from '@map-colonies/js-logger';
 import { inject, singleton } from 'tsyringe';
@@ -242,17 +242,66 @@ export class MapproxySeed {
         this.logger.info('requested to skip uncached tiles');
         flags.push('--skip-uncached');
       }
-      const cmd = $`mapproxy-seed ${flags}`;
 
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-      for await (const chunk of cmd.stdout) {
-        // todo - implement on next phase progressPercentage calculate logic
-        const str: string = (chunk as Buffer).toString('utf8');
-        this.logger.debug(str);
-      }
+      const cmd = $`mapproxy-seed ${flags}`;
+      // promise wrap to synchronized zx internal events with node run time event
+      await new Promise<void>((resolve, reject) => {
+        cmd.stdout
+          .on('data', (chunk: Buffer) => {
+            try {
+              this.seedProgressFunc(chunk);
+            } catch (error) {
+              // this section catching seeding errors and fail the task by kill child process of cmd
+              void cmd.kill('SIGHUP');
+              cmd.child.on('exit', () => {
+                reject(new Error((error as Error).message));
+              });
+            }
+          })
+          .on('end', () => {
+            this.logger.info(`Completed ${options.mode} task`);
+            resolve();
+          });
+      });
+
+      // promise wrap zx event on case of internal crash - so the node will catch up and throw exception to main loop
+      const exitCode = await cmd.exitCode;
+      await new Promise<void>((resolve, reject) => {
+        cmd.catch((error) => {
+          if ((error as ProcessOutput).exitCode !== 0) {
+            reject(new Error((error as ProcessOutput).stderr));
+          }
+        });
+        if (exitCode === 0) {
+          resolve();
+        }
+      });
     } catch (err) {
       this.logger.error({ msg: `failed to generate tiles`, jobId, taskId, err });
       throw err;
+    }
+  }
+
+  //TODO - should be integrated to update job status-progress mechanism
+  //     - calculate dynamically the actual percentage
+  //     - send update percentage to total percentage on job-task tables
+
+  /**
+   * Not implemented - should calculate task progress dynamically and update job-manager progress percentage
+   * @param {Buffer} chunk - Buffer of shell stream data
+   * @returns {void}
+   */
+  private seedProgressFunc(chunk: Buffer): void {
+    const seedLogStr = chunk.toString('utf8');
+    this.logger.debug(seedLogStr); // print all mapproxy-seed stdout
+    if (seedLogStr.match(/- ERROR -/g)) {
+      // task will fail on case of seeding logic error (for example redis connection)
+      const errMsg = seedLogStr.split('- ERROR -')[1];
+      this.logger.error(errMsg);
+      throw new Error(errMsg);
+    }
+    if (seedLogStr.match(/\((\d)+ tiles\)/g)) {
+      this.logger.info(seedLogStr); // print only progress logs
     }
   }
 }

@@ -4,7 +4,7 @@ import nock from 'nock';
 import { IHttpRetryConfig } from '@map-colonies/mc-utils';
 import { configMock, init as initConfig, clear as clearConfig, setValue } from '../../mocks/config';
 import { getApp } from '../../../src/app';
-import { cmdProcessPromise, getTask } from '../../mockData/testStaticData';
+import { getTask } from '../../mockData/testStaticData';
 import { getContainerConfig, resetContainer } from '../testContainerConfig';
 import { MapproxySeed } from '../../../src/mapproxyUtils/mapproxySeed';
 import { IQueueConfig } from '../../../src/common/interfaces';
@@ -14,9 +14,7 @@ import { $ } from 'zx';
 let mapproxyConfigClient: MapproxyConfigClient;
 let mapproxySeed: MapproxySeed;
 
-jest.mock('zx', () => ({
-  $: jest.fn().mockImplementation(() => cmdProcessPromise),
-}));
+$.prefix = 'bad_cli_command_internal_';
 
 describe('#MapproxySeed', () => {
   const jobManagerTestUrl = 'http://someJobManager';
@@ -48,7 +46,7 @@ describe('#MapproxySeed', () => {
   });
 
   describe('#HandleSeedTasks', () => {
-    it('running single seed task', async function () {
+    it.only('running single seed task with bad command - internal process error', async function () {
       const task = getTask();
       const mockYamlFile = 'tests/mockData/mockConfig.yaml';
       const yamlContent = readFileSync(mockYamlFile, { encoding: 'utf8' });
@@ -66,7 +64,13 @@ describe('#MapproxySeed', () => {
       writeFileStub = jest.spyOn(fsp, 'writeFile').mockImplementation(async () => undefined);
       accessStub = jest.spyOn(fsp, 'access').mockImplementation(async () => undefined);
 
-      await mapproxySeed.runSeed(task.parameters.seedTasks[0], task.jobId, task.id);
+      const action = async () => {
+        await mapproxySeed.runSeed(task.parameters.seedTasks[0], task.jobId, task.id);
+      };
+
+      await expect(action).rejects.toThrow(
+        `failed seed for job of test with reason: /bin/bash: bad_cli_command_internal_mapproxy-seed: command not found`
+      );
 
       expect(writeMapproxyYamlSpy).toHaveBeenCalledTimes(1);
       expect(writeFileStub).toHaveBeenCalledTimes(3);
@@ -84,23 +88,7 @@ describe('#MapproxySeed', () => {
       expect(getCleanupSpy).toHaveBeenCalledTimes(0);
       expect(writeFileStub).toHaveBeenNthCalledWith(3, configMock.get('mapproxy.seedYamlDir'), seedYamlContent);
       expect(executeSeedSpy).toHaveBeenCalledTimes(1);
-      expect($).toHaveBeenCalledTimes(1);
-      expect($).toHaveBeenCalledWith(
-        ['mapproxy-seed ', ''],
-        [
-          '-f',
-          `${configMock.get('mapproxy.mapproxyYamlDir')}`,
-          '-s',
-          `${configMock.get('mapproxy.seedYamlDir')}`,
-          '--concurrency',
-          5,
-          '--progress-file',
-          `${configMock.get('mapproxy.seedProgressFileDir')}_${task.parameters.seedTasks[0].mode}`,
-          '--continue',
-          '--skip-uncached',
-        ]
-      );
-      expect(seedProgressFuncSpy).toBeCalledTimes(2);
+      expect(seedProgressFuncSpy).toHaveBeenCalledTimes(0);
     });
   });
 });
