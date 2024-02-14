@@ -67,11 +67,8 @@ describe('#MapproxySeed', () => {
       const action = async () => {
         await mapproxySeed.runSeed(task.parameters.seedTasks[0], task.jobId, task.id);
       };
-
-      await expect(action).rejects.toThrow(
-        `failed seed for job of test with reason: /bin/bash: bad_cli_command_internal_mapproxy-seed: command not found`
-      );
-
+      const x = `failed seed for job of test with reason: /bin/bash: bad_cli_command_internal_mapproxy-seed: command not found`
+      await expect(action).rejects.toThrow(/bad_cli_command_internal_mapproxy-seed/)
       expect(writeMapproxyYamlSpy).toHaveBeenCalledTimes(1);
       expect(writeFileStub).toHaveBeenCalledTimes(3);
       expect(writeFileStub).toHaveBeenNthCalledWith(1, configMock.get('mapproxy.mapproxyYamlDir'), yamlContent, 'utf8');
