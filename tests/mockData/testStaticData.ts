@@ -4,7 +4,7 @@ import { ITaskParams } from '../../src/common/interfaces';
 import { CacheType, SeedMode } from '../../src/common/enums';
 import { Readable, Writable } from 'stream';
 import { ProcessOutput, ProcessPromise } from 'zx';
-import { ChildProcess } from 'child_process';
+import { ChildProcess } from 'node:child_process';
 import * as zx from 'zx';
 
 const task = {
@@ -107,8 +107,9 @@ const job: IJobResponse<unknown, unknown> = {
 function getJob(): IJobResponse<unknown, unknown> {
   return job;
 }
-
+const readableBad = Readable.from(['some dummy log - ERROR - some test error on seeding']);
 const readable = Readable.from(['some test data', 'some test data2']);
+const readableOnStub = jest.spyOn(readable, 'on');
 const cmdProcessPromise: ProcessPromise<ProcessOutput> = {
   stdout: readable,
   child: new ChildProcess(),
@@ -121,21 +122,12 @@ const cmdProcessPromise: ProcessPromise<ProcessOutput> = {
   kill: function (signal?: string | number | undefined): Promise<void> {
     throw new Error('Function not implemented.');
   },
-  then: function <TResult1 = zx.ProcessOutput, TResult2 = never>(
-    onfulfilled?: ((value: zx.ProcessOutput) => TResult1 | PromiseLike<TResult1>) | null | undefined,
-    onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | null | undefined
-  ): Promise<TResult1 | TResult2> {
-    throw new Error('Function not implemented.');
-  },
-  catch: function <TResult = never>(
-    onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | null | undefined
-  ): Promise<zx.ProcessOutput | TResult> {
-    throw new Error('Function not implemented.');
-  },
+  then: jest.fn().mockResolvedValue({exitCode:0,stderr:'',stdout:"success"}),
+  catch: jest.fn().mockResolvedValue(new Error('error')),
   finally: function (onfinally?: (() => void) | null | undefined): Promise<zx.ProcessOutput> {
     throw new Error('Function not implemented.');
   },
   [Symbol.toStringTag]: '',
 };
 
-export { getTask, getJob, cmdProcessPromise };
+export { getTask, getJob, cmdProcessPromise, readableOnStub };
