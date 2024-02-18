@@ -252,6 +252,7 @@ export class MapproxySeed {
               this.seedProgressFunc(chunk);
             } catch (error) {
               // this section catching seeding errors and fail the task by kill child process of cmd
+              this.logger.error({msg:`Failed on seeding process of type ${options.mode}`,jobId,taskId,err:(error as Error).message})
               void cmd.kill('SIGHUP');
               cmd.child.on('exit', () => {
                 reject(new Error((error as Error).message));
@@ -259,7 +260,7 @@ export class MapproxySeed {
             }
           })
           .on('end', () => {
-            this.logger.info(`Completed ${options.mode} task`);
+            this.logger.info({msg: `Completed ${options.mode} task`, jobId, taskId});
             resolve();
           });
       });
@@ -268,6 +269,7 @@ export class MapproxySeed {
       const exitCode = await cmd.exitCode;
       await new Promise<void>((resolve, reject) => {
         cmd.catch((error) => {
+          this.logger.error({msg:`Internal process error`, error: (error as ProcessOutput).stderr, jobId, taskId})
           if ((error as ProcessOutput).exitCode !== 0) {
             reject(new Error((error as ProcessOutput).stderr));
           }
