@@ -61,7 +61,7 @@ export class MapproxySeed {
       if (!isRedisCache(task.layerId, mapproxyConfig as string)) {
         throw new Error(`Cache type should be of type Redis`);
       }
-      
+
       await this.writeGeojsonTxtFile(this.geometryCoverageFilePath, JSON.stringify(task.geometry), jobId, taskId);
       await this.createSeedYamlFile(task, jobId, taskId);
       await this.executeSeed(task, jobId, taskId);
