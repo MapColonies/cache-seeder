@@ -46,7 +46,7 @@ describe('#MapproxySeed', () => {
   });
 
   describe('#HandleSeedTasks', () => {
-    it.only('running single seed task with bad command - internal process error', async function () {
+    it('running single seed task with bad command - internal process error', async function () {
       const task = getTask();
       const mockYamlFile = 'tests/mockData/mockConfig.yaml';
       const yamlContent = readFileSync(mockYamlFile, { encoding: 'utf8' });
