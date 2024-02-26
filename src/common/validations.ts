@@ -27,6 +27,6 @@ export const isRedisCache = (cacheName: string, mapproxyConfigYaml: string): boo
   const mapproxyConfigJson = load(mapproxyConfigYaml) as IMapProxyConfig;
   // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
   const cache = mapproxyConfigJson.caches[cacheName].cache as ICacheSource;
-  const isValidRedisCache = cache.type === CacheType.REDIS;
-  return isValidRedisCache;
+  const isRedisCache = cache.type === CacheType.REDIS;
+  return isRedisCache;
 };

@@ -249,9 +249,8 @@ describe('#MapproxySeed', () => {
         };
 
         await expect(action).rejects.toThrow(`failed seed for job of test with reason: Cache type should be of type Redis`);
-        expect(writeMapproxyYamlSpy).toHaveBeenCalledTimes(1);
-        expect(writeFileStub).toHaveBeenCalledTimes(1);
-        expect(writeFileStub).toHaveBeenNthCalledWith(1, configMock.get('mapproxy.mapproxyYamlDir'), yamlContent, 'utf8');
+        expect(writeMapproxyYamlSpy).toHaveBeenCalledTimes(0);
+        expect(writeFileStub).toHaveBeenCalledTimes(0);
       });
 
       it('Failed on not exists file (geometryCoverageFileJson)', async function () {

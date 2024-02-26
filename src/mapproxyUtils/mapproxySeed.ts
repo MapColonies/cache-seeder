@@ -4,7 +4,7 @@ import { dump } from 'js-yaml';
 import { Logger } from '@map-colonies/js-logger';
 import { inject, singleton } from 'tsyringe';
 import { SERVICES } from '../common/constants';
-import { IConfig, IMapProxyConfig, ISeed } from '../common/interfaces';
+import { IConfig, ISeed } from '../common/interfaces';
 import { MapproxyConfigClient } from '../clients/mapproxyConfig';
 /* eslint-disable @typescript-eslint/naming-convention */
 import { BaseCache, Cleanup, Seed, seedsSchema, cleanupsSchema, baseSchema } from '../common/schemas/seeds';
@@ -57,11 +57,12 @@ export class MapproxySeed {
         throw new Error(`Date string must be 'ISO_8601' format: yyyy-MM-dd'T'HH:mm:ss, for example: 2023-11-07T12:35:00`);
       }
 
-      const mapproxyConfig = await this.writeMapproxyYaml(jobId, taskId);
-      if (!isRedisCache(task.layerId, mapproxyConfig as string)) {
+      const currentMapproxyConfig = await this.mapproxyConfigClient.getConfig();
+      if (!isRedisCache(task.layerId, currentMapproxyConfig as string)) {
         throw new Error(`Cache type should be of type Redis`);
       }
 
+      await this.writeMapproxyYaml(jobId, taskId, currentMapproxyConfig as string);
       await this.writeGeojsonTxtFile(this.geometryCoverageFilePath, JSON.stringify(task.geometry), jobId, taskId);
       await this.createSeedYamlFile(task, jobId, taskId);
       await this.executeSeed(task, jobId, taskId);
@@ -216,13 +217,11 @@ export class MapproxySeed {
     return jsonSeeds;
   }
 
-  private async writeMapproxyYaml(jobId: string, taskId: string): Promise<string | IMapProxyConfig> {
+  private async writeMapproxyYaml(jobId: string, taskId: string, currentMapproxyConfig: string): Promise<void> {
     try {
       this.logger.info({ msg: `Generating current mapproxy config yaml to: ${this.mapproxyYamlDir}`, jobId, taskId });
-      const currentMapproxyConfig = await this.mapproxyConfigClient.getConfig();
       this.logger.debug({ msg: `current mapproxy yaml config`, mapproxyYaml: currentMapproxyConfig, jobId, taskId });
-      await fsp.writeFile(this.mapproxyYamlDir, currentMapproxyConfig as string, 'utf8');
-      return currentMapproxyConfig;
+      await fsp.writeFile(this.mapproxyYamlDir, currentMapproxyConfig, 'utf8');
     } catch (err) {
       this.logger.error({ msg: `Failed on generating mapproxy current yaml`, jobId, taskId, err });
       throw new Error(`Failed on generating mapproxy current yaml`);
