@@ -287,6 +287,32 @@ describe('#MapproxySeed', () => {
         expect(createSeedYamlFileSpy).toHaveBeenCalledTimes(1);
         expect(accessStub).toHaveBeenCalledTimes(2);
       });
+
+      it('Failed on not exists grid', async function () {
+        const task = getTask();
+        const badGridTask = { ...task.parameters.seedTasks[0], grid: 'badGrid' };
+        const mockYamlFile = 'tests/mockData/mockConfig.yaml';
+        const yamlContent = readFileSync(mockYamlFile, { encoding: 'utf8' });
+        nock(mapproxyTestUrl).get(`/config`).reply(200, yamlContent);
+        const writeMapproxyYamlSpy = jest.spyOn(MapproxySeed.prototype as unknown as { writeMapproxyYaml: jest.Mock }, 'writeMapproxyYaml');
+        const writeGeojsonTxtFileSpy = jest.spyOn(MapproxySeed.prototype as unknown as { writeGeojsonTxtFile: jest.Mock }, 'writeGeojsonTxtFile');
+        const createSeedYamlFileSpy = jest.spyOn(MapproxySeed.prototype as unknown as { createSeedYamlFile: jest.Mock }, 'createSeedYamlFile');
+
+        writeFileStub = jest.spyOn(fsp, 'writeFile').mockImplementation(async () => undefined);
+        accessStub = jest.spyOn(fsp, 'access').mockResolvedValueOnce(undefined);
+        accessStub = jest.spyOn(fsp, 'access').mockRejectedValueOnce(new Error('Unknown error'));
+
+        const action = async () => {
+          await mapproxySeed.runSeed(badGridTask, task.jobId, task.id);
+        };
+
+        await expect(action).rejects.toThrow(`failed seed for job of test with reason: Grid: badGrid not exist on mapproxy config`);
+
+        expect(writeMapproxyYamlSpy).toHaveBeenCalledTimes(0);
+        expect(writeFileStub).toHaveBeenCalledTimes(0);
+        expect(writeGeojsonTxtFileSpy).toHaveBeenCalledTimes(0);
+        expect(createSeedYamlFileSpy).toHaveBeenCalledTimes(0);
+      });
     });
   });
 });
