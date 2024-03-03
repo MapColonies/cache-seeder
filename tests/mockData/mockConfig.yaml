@@ -12,6 +12,17 @@ grids:
     origin: ll
     min_res: 0.703125
     num_levels: 21
+  wgs84:
+    srs: 'EPSG:4326'
+    bbox:
+      - -180
+      - -90
+      - 180
+      - 90
+    name: newGrids
+    origin: ll
+    min_res: 0.703125
+    num_levels: 21
 caches:
   osm_cache:
     grids:

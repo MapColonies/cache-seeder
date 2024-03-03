@@ -10,7 +10,7 @@ import { MapproxyConfigClient } from '../clients/mapproxyConfig';
 import { BaseCache, Cleanup, Seed, seedsSchema, cleanupsSchema, baseSchema } from '../common/schemas/seeds';
 import { Coverage, coveragesSchema } from '../common/schemas/coverages';
 import { SeedMode } from '../common/enums';
-import { fileExists, isRedisCache, isValidDateFormat, zoomComparison } from '../common/validations';
+import { fileExists, isGridExists, isRedisCache, isValidDateFormat, zoomComparison } from '../common/validations';
 
 $.verbose = false;
 
@@ -60,6 +60,11 @@ export class MapproxySeed {
       const currentMapproxyConfig = await this.mapproxyConfigClient.getConfig();
       if (!isRedisCache(task.layerId, currentMapproxyConfig as string)) {
         throw new Error(`Cache type should be of type Redis`);
+      }
+
+      if (!isGridExists(task.grid, currentMapproxyConfig as string)) {
+        const errMsg = `Grid: ${task.grid} not exist on mapproxy config`;
+        throw new Error(errMsg);
       }
 
       await this.writeMapproxyYaml(jobId, taskId, currentMapproxyConfig as string);
@@ -301,10 +306,15 @@ export class MapproxySeed {
     const seedLogStr = chunk.toString('utf8');
     this.logger.debug(seedLogStr); // print all mapproxy-seed stdout
     if (seedLogStr.match(/- ERROR -/g)) {
+      // substr that detect seeding process error on mapproxy-seed util
       // task will fail on case of seeding logic error (for example redis connection)
       const errMsg = seedLogStr.split('- ERROR -')[1];
       this.logger.error(errMsg);
       throw new Error(errMsg);
+    } else if (seedLogStr.match(/error in configuration:/)) {
+      // substr that detect some mapproxy configuration errors
+      this.logger.error(seedLogStr);
+      throw new Error(seedLogStr);
     }
     if (seedLogStr.match(/\((\d)+ tiles\)/g)) {
       this.logger.info(seedLogStr); // print only progress logs

@@ -30,3 +30,11 @@ export const isRedisCache = (cacheName: string, mapproxyConfigYaml: string): boo
   const isRedisCache = cache.type === CacheType.REDIS;
   return isRedisCache;
 };
+
+export const isGridExists = (gridName: string, mapproxyConfigYaml: string): boolean => {
+  const mapproxyConfigJson = load(mapproxyConfigYaml) as IMapProxyConfig;
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+  const gridsNames = Object.keys(mapproxyConfigJson.grids);
+  const isGridExists = gridsNames.includes(gridName);
+  return isGridExists;
+};
