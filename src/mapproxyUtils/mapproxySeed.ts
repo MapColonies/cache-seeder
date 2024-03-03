@@ -10,7 +10,7 @@ import { MapproxyConfigClient } from '../clients/mapproxyConfig';
 import { BaseCache, Cleanup, Seed, seedsSchema, cleanupsSchema, baseSchema } from '../common/schemas/seeds';
 import { Coverage, coveragesSchema } from '../common/schemas/coverages';
 import { SeedMode } from '../common/enums';
-import { fileExists, isValidDateFormat, zoomComparison } from '../common/validations';
+import { fileExists, isRedisCache, isValidDateFormat, zoomComparison } from '../common/validations';
 
 $.verbose = false;
 
@@ -57,7 +57,12 @@ export class MapproxySeed {
         throw new Error(`Date string must be 'ISO_8601' format: yyyy-MM-dd'T'HH:mm:ss, for example: 2023-11-07T12:35:00`);
       }
 
-      await this.writeMapproxyYaml(jobId, taskId);
+      const currentMapproxyConfig = await this.mapproxyConfigClient.getConfig();
+      if (!isRedisCache(task.layerId, currentMapproxyConfig as string)) {
+        throw new Error(`Cache type should be of type Redis`);
+      }
+
+      await this.writeMapproxyYaml(jobId, taskId, currentMapproxyConfig as string);
       await this.writeGeojsonTxtFile(this.geometryCoverageFilePath, JSON.stringify(task.geometry), jobId, taskId);
       await this.createSeedYamlFile(task, jobId, taskId);
       await this.executeSeed(task, jobId, taskId);
@@ -212,12 +217,11 @@ export class MapproxySeed {
     return jsonSeeds;
   }
 
-  private async writeMapproxyYaml(jobId: string, taskId: string): Promise<void> {
+  private async writeMapproxyYaml(jobId: string, taskId: string, currentMapproxyConfig: string): Promise<void> {
     try {
       this.logger.info({ msg: `Generating current mapproxy config yaml to: ${this.mapproxyYamlDir}`, jobId, taskId });
-      const currentMapproxyConfig = await this.mapproxyConfigClient.getConfig();
       this.logger.debug({ msg: `current mapproxy yaml config`, mapproxyYaml: currentMapproxyConfig, jobId, taskId });
-      await fsp.writeFile(this.mapproxyYamlDir, currentMapproxyConfig as string, 'utf8');
+      await fsp.writeFile(this.mapproxyYamlDir, currentMapproxyConfig, 'utf8');
     } catch (err) {
       this.logger.error({ msg: `Failed on generating mapproxy current yaml`, jobId, taskId, err });
       throw new Error(`Failed on generating mapproxy current yaml`);

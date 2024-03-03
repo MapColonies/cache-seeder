@@ -234,6 +234,25 @@ describe('#MapproxySeed', () => {
         expect(accessStub).toHaveBeenCalledTimes(1);
       });
 
+      it('Failed on not valid cache type on mapproxyYaml (not redis)', async function () {
+        const task = getTask();
+        const mockYamlFile = 'tests/mockData/mockBadConfig.yaml';
+        const yamlContent = readFileSync(mockYamlFile, { encoding: 'utf8' });
+        nock(mapproxyTestUrl).get(`/config`).reply(200, yamlContent);
+        const writeMapproxyYamlSpy = jest.spyOn(MapproxySeed.prototype as unknown as { writeMapproxyYaml: jest.Mock }, 'writeMapproxyYaml');
+
+        writeFileStub = jest.spyOn(fsp, 'writeFile').mockImplementation(async () => undefined);
+        accessStub = jest.spyOn(fsp, 'access').mockImplementation(async () => undefined);
+
+        const action = async () => {
+          await mapproxySeed.runSeed(task.parameters.seedTasks[0], task.jobId, task.id);
+        };
+
+        await expect(action).rejects.toThrow(`failed seed for job of test with reason: Cache type should be of type Redis`);
+        expect(writeMapproxyYamlSpy).toHaveBeenCalledTimes(0);
+        expect(writeFileStub).toHaveBeenCalledTimes(0);
+      });
+
       it('Failed on not exists file (geometryCoverageFileJson)', async function () {
         const task = getTask();
         const mockYamlFile = 'tests/mockData/mockConfig.yaml';

@@ -31,7 +31,7 @@ caches:
     minimize_meta_request: true
   test:
     cache:
-      type: redis
+      type: file
       directory: /testId2/VectorBest/
       directory_layout: tms
     grids:
