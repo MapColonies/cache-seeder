@@ -29,4 +29,6 @@ data:
   MAPPROXY_API_URL: {{ .Values.env.mapproxy.mapproxyApiUrl | quote}}
   SEED_ATTEMPTS: {{ .Values.env.seedAttempts | quote}}
   SEED_CONCURRENCY: {{ .Values.env.seedConcurrency | quote}}
+  REDIS_PASSWORD: {{ .Values.env.redis.password | quote}}
+  REDIS_USERNAME: {{ .Values.env.redis.user | quote}}
 {{- end }}

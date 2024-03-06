@@ -93,6 +93,9 @@ env:
   metrics:
     enabled: false
     url: http://localhost:55681/v1/metrics
+  redis: 
+    user: ""
+    password: ""
   queue:
     jobManagerBaseUrl: "http://localhost:8081"
     heartbeat:
