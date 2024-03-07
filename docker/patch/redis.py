@@ -15,7 +15,7 @@
 
 from __future__ import absolute_import
 import datetime
-
+import os
 import hashlib
 import time
 
@@ -40,11 +40,14 @@ class RedisCache(TileCacheBase):
     def __init__(self, host, port, prefix, ttl=0, db=0):
         if redis is None:
             raise ImportError("Redis backend requires 'redis' package.")
-
+        
+        # temporary patch - should be auto support on mapproxy 2.0
+        user = os.environ.get('REDIS_USERNAME')
+        password = os.environ.get('REDIS_PASSWORD')
         self.prefix = prefix
         self.lock_cache_id = 'redis-' + hashlib.md5((host + str(port) + prefix + str(db)).encode('utf-8')).hexdigest()
         self.ttl = ttl
-        self.r = redis.StrictRedis(host=host, port=port, db=db)
+        self.r = redis.StrictRedis(host=host, port=port, db=db, password=password, username=user)
 
     def _key(self, tile):
         x, y, z = tile.coord

@@ -311,7 +311,7 @@ export class MapproxySeed {
       const errMsg = seedLogStr.split('- ERROR -')[1];
       this.logger.error(errMsg);
       throw new Error(errMsg);
-    } else if (seedLogStr.match(/error in configuration:/)) {
+    } else if (seedLogStr.match(/error in configuration:/g)) {
       // substr that detect some mapproxy configuration errors
       this.logger.error(seedLogStr);
       throw new Error(seedLogStr);

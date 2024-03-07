@@ -43,6 +43,7 @@ RUN npm ci --only=production
 
 RUN apt-get update || : && apt-get install python3 -y
 RUN apt install dumb-init
+RUN apt-get install python3-pil -y
 RUN apt-get install -y procps && rm -rf /var/lib/apt/lists/*
 
 COPY --chown=node:node --from=mid /usr/src/app/dist .

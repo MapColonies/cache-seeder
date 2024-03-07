@@ -56,3 +56,7 @@ Custom definitions
 {{- define "common.fs.merged" -}}
 {{- include "common.tplvalues.merge" ( dict "values" ( list .Values.storage.fs .Values.global.storage.fs ) "context" . ) }}
 {{- end -}}
+
+{{- define "common.redis.merged" -}}
+{{- include "common.tplvalues.merge" ( dict "values" ( list .Values.redis .Values.global.redis ) "context" . ) }}
+{{- end -}}
