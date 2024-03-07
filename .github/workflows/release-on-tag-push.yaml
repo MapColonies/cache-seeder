@@ -6,24 +6,7 @@ on:
       - "v*"
 
 jobs:
-  publish_release:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code for CHANGELOG.md
-        uses: actions/checkout@v2
-
-      - name: Get package info
-        id: package
-        uses: codex-team/action-nodejs-package-info@v1
-
-      - name: Generate postman collection for service
-        uses: actions/setup-node@v2
-        with:
-          node-version: '20'
-
-      - name: Publish Release to Github
-        uses: softprops/action-gh-release@v1
-        with:
-          body_path: CHANGELOG.md
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  release_on_tag_push:
+    uses: MapColonies/shared-workflows/.github/workflows/release-on-tag-push.yaml@workersTS
+    secrets: inherit
+    
