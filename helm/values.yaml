@@ -11,6 +11,7 @@ global:
       internalPvc:
         name: ""
         tilesSubPath: ""
+  redis: {}
 
 storage: # local service level
   tilesStorageProvider: ""
@@ -24,6 +25,12 @@ storage: # local service level
       name: ""
       mountPath: ""
       tilesSubPath: ""
+
+redis: # same hierarchy as in mapproxy-api values
+  auth:
+    enableRedisUser: false
+    username: ""
+    password: ""
 
 secretName: ""
 enabled: true
@@ -93,9 +100,6 @@ env:
   metrics:
     enabled: false
     url: http://localhost:55681/v1/metrics
-  redis: 
-    user: ""
-    password: ""
   queue:
     jobManagerBaseUrl: "http://localhost:8081"
     heartbeat:
