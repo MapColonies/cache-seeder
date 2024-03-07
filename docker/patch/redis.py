@@ -47,7 +47,7 @@ class RedisCache(TileCacheBase):
         self.prefix = prefix
         self.lock_cache_id = 'redis-' + hashlib.md5((host + str(port) + prefix + str(db)).encode('utf-8')).hexdigest()
         self.ttl = ttl
-        self.r = redis.StrictRedis(host=host, port=port, db=db, password=password,username=user)
+        self.r = redis.StrictRedis(host=host, port=port, db=db, password=password, username=user)
 
     def _key(self, tile):
         x, y, z = tile.coord
