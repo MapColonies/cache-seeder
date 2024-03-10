@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.0.2](https://github.com/MapColonies/cache-seeder/compare/v1.0.1...v1.0.2) (2024-03-10)
+
+
+### Bug Fixes
+
+* adapting helm for umbrella ([#8](https://github.com/MapColonies/cache-seeder/issues/8)) ([edee8c2](https://github.com/MapColonies/cache-seeder/commit/edee8c2fd3882bc493d6c6938ed37e526cd25803))
+
 ### [1.0.1](https://github.com/MapColonies/cache-seeder/compare/v1.0.0...v1.0.1) (2024-03-07)
 
 ## 1.0.0 (2024-03-07)
