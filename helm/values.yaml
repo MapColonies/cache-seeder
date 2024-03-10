@@ -12,6 +12,10 @@ global:
         name: ""
         mountPath: ""
         tilesSubPath: ""
+  serviceUrls:
+    mapproxyApi: ""
+    jobManager: ""
+    heartbeatManager: ""
   redis: {}
 
 storage: # local service level
@@ -78,6 +82,11 @@ cloudProvider:
   imagePullSecretName: ''
   flavor: openshift
 
+serviceUrls:
+  mapproxyApi: ""
+  jobManager: ""
+  heartbeatManager: ""
+
 caSecretName: ''
 caPath: '/usr/local/share/ca-certificates'
 caKey: 'ca.crt'
@@ -102,15 +111,11 @@ env:
     enabled: false
     url: http://localhost:55681/v1/metrics
   queue:
-    jobManagerBaseUrl: "http://localhost:8081"
     heartbeat:
-      heartbeatManagerBaseUrl: "http://localhost:8089"
       heartbeatIntervalMs: 3000
     dequeueIntervalMs: 2000
     jobType: "TilesSeeding"
     tilesTaskType: "TilesSeeding"
-  mapproxy:
-    mapproxyApiUrl: "http://localhost:8083"
   seedAttempts: 5
   seedConcurrency: 5
 
