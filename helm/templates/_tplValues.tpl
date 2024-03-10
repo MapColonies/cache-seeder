@@ -60,3 +60,7 @@ Custom definitions
 {{- define "common.redis.merged" -}}
 {{- include "common.tplvalues.merge" ( dict "values" ( list .Values.redis .Values.global.redis ) "context" . ) }}
 {{- end -}}
+
+{{- define "common.serviceUrls.merged" -}}
+{{- include "common.tplvalues.merge" ( dict "values" ( list .Values.serviceUrls .Values.global.serviceUrls ) "context" . ) }}
+{{- end -}}
