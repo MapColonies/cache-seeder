@@ -10,6 +10,7 @@ global:
     fs:
       internalPvc:
         name: ""
+        mountPath: ""
         tilesSubPath: ""
   redis: {}
 
