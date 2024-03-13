@@ -82,6 +82,7 @@ const registerDefaultConfig = (): void => {
       geometryTxtFile: '/mapproxy/coverage.json',
       seedProgressFileDir: '/mapproxy/mapproxy_seed_progress',
     },
+    gracefulReloadMaxSeconds: 0,
     seedAttempts: 5,
   };
   setConfigValues(config);
