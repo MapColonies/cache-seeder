@@ -43,5 +43,6 @@
     "seedProgressFileDir": "/mapproxy/mapproxy_seed_progress"
   },
   "seedAttempts": 5,
-  "seedConcurrency": 5
+  "seedConcurrency": 5,
+  "gracefulReloadMaxSeconds": 300
 }

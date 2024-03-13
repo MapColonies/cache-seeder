@@ -30,6 +30,7 @@ describe('CacheSeedManager', () => {
     setValue('server.httpRetry', { ...configMock.get<IHttpRetryConfig>('server.httpRetry'), delay: 0 });
     mapproxyConfigClient = new MapproxyConfigClient(configMock, jsLogger({ enabled: false }));
     queueClient = new QueueClient(configMock, jsLogger({ enabled: false }), configMock.get<IQueueConfig>('queue'));
+    jest.spyOn(CacheSeedManager.prototype as unknown as { delay: jest.Mock }, 'delay').mockResolvedValue(undefined);
 
     console.warn = jest.fn();
     getApp({
@@ -174,18 +175,16 @@ describe('CacheSeedManager', () => {
     it('Reject seed task for getting invalid mode type (not seed or clean on task params', async function () {
       const task = { ...getTask(), parameters: { ...getTask().parameters, seedTasks: [{ mode: 'testMode' }] } };
       const job = getJob();
-
       dequeueStub = jest.spyOn(queueClient.queueHandlerForTileSeedingTasks, 'dequeue').mockResolvedValue(task);
       rejectStubForTileTasks = jest.spyOn(queueClient.queueHandlerForTileSeedingTasks, 'reject').mockImplementation(async () => Promise.resolve());
-
       nock(jobManagerTestUrl).get(`/jobs/${task.jobId}?shouldReturnTasks=false`).reply(200, job); // internal job manager getJob request mocking
-
       const runTaskSpy = jest.spyOn(CacheSeedManager.prototype as unknown as { runTask: jest.Mock }, 'runTask');
-
       getConfigMock.mockResolvedValue({} as unknown as IMapProxyConfig);
-      // action
-      await cacheSeedManager.handleCacheSeedTask();
 
+      // action
+      const action = async () => cacheSeedManager.handleCacheSeedTask();
+
+      await expect(action()).resolves.not.toThrow();
       expect(dequeueStub).toHaveBeenCalledTimes(1);
       expect(runTaskSpy).toHaveBeenCalledTimes(1);
       expect(rejectStubForTileTasks).toHaveBeenCalledTimes(1);
@@ -195,6 +194,20 @@ describe('CacheSeedManager', () => {
         true,
         `Unsupported seeding mode: testMode, should be one of: 'seed' or 'clean'`
       );
+    });
+  });
+
+  describe('#Delay', () => {
+    it('Running timeout', async function () {
+      jest.spyOn(CacheSeedManager.prototype as unknown as { delay: jest.Mock }, 'delay').mockRestore();
+      const setTimeoutMock = jest.spyOn(global, 'setTimeout');
+
+      // action
+      const action = async () => cacheSeedManager.delay(0.001);
+
+      await expect(action()).resolves.not.toThrow();
+      expect(setTimeoutMock).toHaveBeenCalledTimes(1);
+      expect(setTimeoutMock).toHaveBeenCalledWith(expect.anything(), 1);
     });
   });
 });
