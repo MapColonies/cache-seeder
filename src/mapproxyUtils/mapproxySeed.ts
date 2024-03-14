@@ -22,6 +22,8 @@ export class MapproxySeed {
   private readonly seedConcurrency: number;
   private readonly mapproxySeedProgressDir: string;
   private readonly gracefulReloadMaxSeconds: number;
+  private readonly secondsInMin: number;
+  private readonly bumpFactor: number;
 
   public constructor(
     @inject(SERVICES.LOGGER) private readonly logger: Logger,
@@ -34,6 +36,8 @@ export class MapproxySeed {
     this.seedConcurrency = 5;
     this.mapproxySeedProgressDir = this.config.get<string>('mapproxy.seedProgressFileDir');
     this.gracefulReloadMaxSeconds = this.config.get<number>('gracefulReloadMaxSeconds');
+    this.secondsInMin = 60;
+    this.bumpFactor = 2;
   }
 
   public async runSeed(task: ISeed, jobId: string, taskId: string): Promise<void> {
@@ -83,9 +87,7 @@ export class MapproxySeed {
   }
 
   public addTimeMinuteBuffer(dataTimeStr: string): string {
-    const secondsInMin = 60;
-    const factor = 2;
-    const timeBufferMinute = (this.gracefulReloadMaxSeconds / secondsInMin) * factor;
+    const timeBufferMinute = Math.max(this.gracefulReloadMaxSeconds / this.secondsInMin, 1) * this.bumpFactor;
     const origDateTime = new Date(dataTimeStr);
     const minutes = origDateTime.getMinutes() + timeBufferMinute;
     const newDateTime = new Date(origDateTime.setMinutes(minutes));
@@ -100,7 +102,7 @@ export class MapproxySeed {
     );
     const utcDate = new Date(nowUtc);
     const validSeedDateFormatted = utcDate.toISOString().replace(/\..+/, '');
-
+    
     return validSeedDateFormatted;
   }
 
