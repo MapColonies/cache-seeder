@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.0.5](https://github.com/MapColonies/cache-seeder/compare/v1.0.4...v1.0.5) (2024-03-14)
+
+
+### Bug Fixes
+
+* add time factor to refresh seed ([d665581](https://github.com/MapColonies/cache-seeder/commit/d6655817d707825948b0191a9bbd9a8c5ea92b87))
+* refresh time for seeder with bumping by factor ([#11](https://github.com/MapColonies/cache-seeder/issues/11)) ([32ac897](https://github.com/MapColonies/cache-seeder/commit/32ac89774b8754e53b5764bc28ab9c44e86abc4d))
+* revert ([2cefcc6](https://github.com/MapColonies/cache-seeder/commit/2cefcc664c12ea75f0f97d17561e13d5afd83919))
+
 ### [1.0.4](https://github.com/MapColonies/cache-seeder/compare/v1.0.3...v1.0.4) (2024-03-13)
 
 
