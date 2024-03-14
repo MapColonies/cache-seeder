@@ -21,6 +21,9 @@ export class MapproxySeed {
   private readonly geometryCoverageFilePath: string;
   private readonly seedConcurrency: number;
   private readonly mapproxySeedProgressDir: string;
+  private readonly gracefulReloadMaxSeconds: number;
+  private readonly secondsInMin: number;
+  private readonly bumpFactor: number;
 
   public constructor(
     @inject(SERVICES.LOGGER) private readonly logger: Logger,
@@ -32,9 +35,14 @@ export class MapproxySeed {
     this.geometryCoverageFilePath = this.config.get<string>('mapproxy.geometryTxtFile');
     this.seedConcurrency = 5;
     this.mapproxySeedProgressDir = this.config.get<string>('mapproxy.seedProgressFileDir');
+    this.gracefulReloadMaxSeconds = this.config.get<number>('gracefulReloadMaxSeconds');
+    this.secondsInMin = 60;
+    this.bumpFactor = 2;
   }
 
   public async runSeed(task: ISeed, jobId: string, taskId: string): Promise<void> {
+    task.refreshBefore = this.addTimeMinuteBuffer(task.refreshBefore);
+
     this.logger.info({
       msg: `processing ${task.mode} for job of ${task.layerId}`,
       jobId,
@@ -76,6 +84,26 @@ export class MapproxySeed {
       this.logger.error({ msg: `failed seed for job (type of ${task.mode}) of ${task.layerId}`, jobId, taskId, err });
       throw new Error(`failed seed for job of ${task.layerId} with reason: ${(err as Error).message}`);
     }
+  }
+
+  public addTimeMinuteBuffer(dataTimeStr: string): string {
+    const timeBufferMinute = Math.max(this.gracefulReloadMaxSeconds / this.secondsInMin, 1) * this.bumpFactor;
+    const origDateTime = new Date(dataTimeStr);
+    const minutes = origDateTime.getMinutes() + timeBufferMinute;
+    const newDateTime = new Date(origDateTime.setMinutes(minutes));
+
+    const nowUtc = Date.UTC(
+      newDateTime.getFullYear(),
+      newDateTime.getMonth(),
+      newDateTime.getDate(),
+      newDateTime.getHours(),
+      newDateTime.getMinutes(),
+      newDateTime.getSeconds()
+    );
+    const utcDate = new Date(nowUtc);
+    const validSeedDateFormatted = utcDate.toISOString().replace(/\..+/, '');
+
+    return validSeedDateFormatted;
   }
 
   private async writeGeojsonTxtFile(path: string, data: string, jobId: string, taskId: string): Promise<void> {
