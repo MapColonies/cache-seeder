@@ -185,8 +185,9 @@ describe('#MapproxySeed', () => {
         const writeMapproxyYamlSpy = jest.spyOn(MapproxySeed.prototype as unknown as { writeMapproxyYaml: jest.Mock }, 'writeMapproxyYaml');
         const writeGeojsonTxtFileSpy = jest.spyOn(MapproxySeed.prototype as unknown as { writeGeojsonTxtFile: jest.Mock }, 'writeGeojsonTxtFile');
         const createSeedYamlFileSpy = jest.spyOn(MapproxySeed.prototype as unknown as { createSeedYamlFile: jest.Mock }, 'createSeedYamlFile');
+        const addTimeMinuteBufferSpy = jest.spyOn(MapproxySeed.prototype as unknown as { addTimeMinuteBuffer: jest.Mock }, 'addTimeMinuteBuffer');
         const executeSeedSpy = jest.spyOn(MapproxySeed.prototype as unknown as { executeSeed: jest.Mock }, 'executeSeed');
-
+        addTimeMinuteBufferSpy.mockImplementation((str) => str);
         const action = async () => {
           await mapproxySeed.runSeed({ ...task.parameters.seedTasks[0], refreshBefore: 'badDate' } as unknown as ISeed, task.jobId, task.id);
         };
