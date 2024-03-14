@@ -102,7 +102,7 @@ export class MapproxySeed {
     );
     const utcDate = new Date(nowUtc);
     const validSeedDateFormatted = utcDate.toISOString().replace(/\..+/, '');
-    
+
     return validSeedDateFormatted;
   }
 
