@@ -10,7 +10,7 @@ seeds:
       from: 0
       to: 21
     refresh_before:
-      time: '2025-01-16T16:24:22'
+      time: '2025-01-16T16:14:22'
 coverages:
   test-coverage:
     datasource: /mapproxy/coverage.json
