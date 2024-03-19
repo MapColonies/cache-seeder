@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.0.6](https://github.com/MapColonies/cache-seeder/compare/v1.0.5...v1.0.6) (2024-03-19)
+
+
+### Bug Fixes
+
+* seedConcurrency value from hard-coded to configuration ([#12](https://github.com/MapColonies/cache-seeder/issues/12)) ([45cc600](https://github.com/MapColonies/cache-seeder/commit/45cc600dfb4e1c4e2b30ba06062a9f3fb8c9d243))
+
 ### [1.0.5](https://github.com/MapColonies/cache-seeder/compare/v1.0.4...v1.0.5) (2024-03-14)
 
 
