@@ -33,7 +33,7 @@ export class MapproxySeed {
     this.mapproxyYamlDir = this.config.get<string>('mapproxy.mapproxyYamlDir');
     this.seedYamlDir = this.config.get<string>('mapproxy.seedYamlDir');
     this.geometryCoverageFilePath = this.config.get<string>('mapproxy.geometryTxtFile');
-    this.seedConcurrency = 5;
+    this.seedConcurrency = this.config.get<number>('seedConcurrency');
     this.mapproxySeedProgressDir = this.config.get<string>('mapproxy.seedProgressFileDir');
     this.gracefulReloadMaxSeconds = this.config.get<number>('gracefulReloadMaxSeconds');
     this.secondsInMin = 60;
@@ -280,6 +280,8 @@ export class MapproxySeed {
         flags.push('--skip-uncached');
       }
 
+      /* eslint-disable @typescript-eslint/restrict-template-expressions */
+      this.logger.info({ msg: 'Execute cli command for seed', command: `mapproxy-seed ${flags}` });
       const cmd = $`mapproxy-seed ${flags}`;
       // promise wrap to synchronized zx internal events with node run time event
       await new Promise<void>((resolve, reject) => {
