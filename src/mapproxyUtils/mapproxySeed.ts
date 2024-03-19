@@ -280,7 +280,8 @@ export class MapproxySeed {
         flags.push('--skip-uncached');
       }
 
-      this.logger.info({msg: 'Execute cli command for seed' ,command: `mapproxy-seed ${flags}` })
+      /* eslint-disable @typescript-eslint/restrict-template-expressions */
+      this.logger.info({ msg: 'Execute cli command for seed', command: `mapproxy-seed ${flags}` });
       const cmd = $`mapproxy-seed ${flags}`;
       // promise wrap to synchronized zx internal events with node run time event
       await new Promise<void>((resolve, reject) => {
