@@ -123,7 +123,8 @@ export class MapproxySeed {
 
     return validSeedDateFormatted;
   }
-  
+
+  // eslint-disable-next-line @typescript-eslint/member-ordering
   @withSpanAsyncV4
   private async writeGeojsonTxtFile(path: string, data: string, jobId: string, taskId: string): Promise<void> {
     const spanActive = trace.getActiveSpan();
@@ -145,6 +146,7 @@ export class MapproxySeed {
     }
   }
 
+  // eslint-disable-next-line @typescript-eslint/member-ordering
   @withSpanAsyncV4
   private async createSeedYamlFile(seedOptions: ISeed, jobId: string, taskId: string): Promise<void> {
     this.logger.info({
