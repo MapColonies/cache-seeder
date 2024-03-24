@@ -14,6 +14,8 @@ import { getSpanLinkOption } from '../common/tracing';
 export class CacheSeedManager {
   private readonly seedAttempts: number;
   private readonly taskType: string;
+  private readonly msToSeconds: number;
+  private readonly gracefulReloadMaxSeconds: number;
 
   public constructor(
     @inject(SERVICES.LOGGER) private readonly logger: Logger,
@@ -24,6 +26,8 @@ export class CacheSeedManager {
   ) {
     this.seedAttempts = this.config.get<number>('seedAttempts');
     this.taskType = this.config.get<string>('queue.tilesTaskType');
+    this.gracefulReloadMaxSeconds = this.config.get<number>('gracefulReloadMaxSeconds');
+    this.msToSeconds = 1000;
   }
 
   public async handleCacheSeedTask(): Promise<boolean> {
@@ -80,7 +84,9 @@ export class CacheSeedManager {
           await this.queueClient.queueHandlerForTileSeedingTasks.jobManagerClient.updateJob(jobId, { status: OperationStatus.FAILED });
           return false;
         }
+
         try {
+          await this.delay(this.gracefulReloadMaxSeconds);
           await this.runTask(seeds, jobId, taskId);
           await this.queueClient.queueHandlerForTileSeedingTasks.ack(jobId, taskId);
           await this.queueClient.queueHandlerForTileSeedingTasks.jobManagerClient.updateJob(jobId, {
@@ -98,6 +104,10 @@ export class CacheSeedManager {
       'handleCacheSeedTask',
       spanOptions
     );
+  }
+  public async delay(seconds: number): Promise<void> {
+    this.logger.info(`waiting before executing by gracefulReloadRandomSeconds delay for -${seconds}- seconds `);
+    await new Promise((resolve) => setTimeout(resolve, seconds * this.msToSeconds));
   }
 
   // eslint-disable-next-line @typescript-eslint/member-ordering

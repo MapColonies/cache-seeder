@@ -2,6 +2,29 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.0.6](https://github.com/MapColonies/cache-seeder/compare/v1.0.5...v1.0.6) (2024-03-19)
+
+
+### Bug Fixes
+
+* seedConcurrency value from hard-coded to configuration ([#12](https://github.com/MapColonies/cache-seeder/issues/12)) ([45cc600](https://github.com/MapColonies/cache-seeder/commit/45cc600dfb4e1c4e2b30ba06062a9f3fb8c9d243))
+
+### [1.0.5](https://github.com/MapColonies/cache-seeder/compare/v1.0.4...v1.0.5) (2024-03-14)
+
+
+### Bug Fixes
+
+* add time factor to refresh seed ([d665581](https://github.com/MapColonies/cache-seeder/commit/d6655817d707825948b0191a9bbd9a8c5ea92b87))
+* refresh time for seeder with bumping by factor ([#11](https://github.com/MapColonies/cache-seeder/issues/11)) ([32ac897](https://github.com/MapColonies/cache-seeder/commit/32ac89774b8754e53b5764bc28ab9c44e86abc4d))
+* revert ([2cefcc6](https://github.com/MapColonies/cache-seeder/commit/2cefcc664c12ea75f0f97d17561e13d5afd83919))
+
+### [1.0.4](https://github.com/MapColonies/cache-seeder/compare/v1.0.3...v1.0.4) (2024-03-13)
+
+
+### Bug Fixes
+
+* insert timeout after polling valid job ([#10](https://github.com/MapColonies/cache-seeder/issues/10)) ([ab90233](https://github.com/MapColonies/cache-seeder/commit/ab90233409c5996d5f980101c1db3e49fd6c1c79))
+
 ### [1.0.3](https://github.com/MapColonies/cache-seeder/compare/v1.0.2...v1.0.3) (2024-03-10)
 
 ### [1.0.2](https://github.com/MapColonies/cache-seeder/compare/v1.0.1...v1.0.2) (2024-03-10)

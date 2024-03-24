@@ -65,5 +65,9 @@
   "seedConcurrency": {
     "__name": "SEED_CONCURRENCY",
     "__format": "number"
+  },
+  "gracefulReloadMaxSeconds": {
+    "__name": "GRACEFUL_RELOAD_MAX_SECONDS",
+    "__format": "number"
   }
 }

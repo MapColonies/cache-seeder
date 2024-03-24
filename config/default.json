@@ -48,5 +48,6 @@
   },
 
   "seedAttempts": 5,
-  "seedConcurrency": 5
+  "seedConcurrency": 5,
+  "gracefulReloadMaxSeconds": 300
 }

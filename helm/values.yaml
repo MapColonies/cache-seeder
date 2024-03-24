@@ -17,6 +17,7 @@ global:
     jobManager: ""
     heartbeatManager: ""
   redis: {}
+  gracefulReloadMaxSeconds: 300
 
 storage: # local service level
   tilesStorageProvider: ""
