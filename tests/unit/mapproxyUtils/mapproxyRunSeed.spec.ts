@@ -10,6 +10,7 @@ import { MapproxySeed } from '../../../src/mapproxyUtils/mapproxySeed';
 import { IQueueConfig } from '../../../src/common/interfaces';
 import { MapproxyConfigClient } from '../../../src/clients/mapproxyConfig';
 import { $ } from 'zx';
+import { tracerMock } from '../../mocks/tracer';
 
 let mapproxyConfigClient: MapproxyConfigClient;
 let mapproxySeed: MapproxySeed;
@@ -30,14 +31,14 @@ describe('#MapproxySeed', () => {
     setValue('seedAttempts', 4);
     setValue('queue', { ...configMock.get<IQueueConfig>('queue'), jobManagerBaseUrl: jobManagerTestUrl });
     setValue('server.httpRetry', { ...configMock.get<IHttpRetryConfig>('server.httpRetry'), delay: 0 });
-    mapproxyConfigClient = new MapproxyConfigClient(configMock, jsLogger({ enabled: false }));
+    mapproxyConfigClient = new MapproxyConfigClient(configMock, jsLogger({ enabled: false }), tracerMock);
 
     console.warn = jest.fn();
     getApp({
       override: [...getContainerConfig()],
       useChild: false,
     });
-    mapproxySeed = new MapproxySeed(jsLogger({ enabled: false }), configMock, mapproxyConfigClient);
+    mapproxySeed = new MapproxySeed(jsLogger({ enabled: false }), configMock, tracerMock, mapproxyConfigClient);
   });
 
   afterEach(function () {

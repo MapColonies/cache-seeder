@@ -11,6 +11,7 @@ import { MapproxySeed } from '../../../src/mapproxyUtils/mapproxySeed';
 import { IMapProxyConfig, IQueueConfig } from '../../../src/common/interfaces';
 import { getConfigMock } from '../../mocks/clients/mapproxyConfig';
 import { MapproxyConfigClient } from '../../../src/clients/mapproxyConfig';
+import { tracerMock } from '../../mocks/tracer';
 
 let queueClient: QueueClient;
 let mapproxyConfigClient: MapproxyConfigClient;
@@ -28,7 +29,7 @@ describe('CacheSeedManager', () => {
     setValue('seedAttempts', 4);
     setValue('queue', { ...configMock.get<IQueueConfig>('queue'), jobManagerBaseUrl: jobManagerTestUrl });
     setValue('server.httpRetry', { ...configMock.get<IHttpRetryConfig>('server.httpRetry'), delay: 0 });
-    mapproxyConfigClient = new MapproxyConfigClient(configMock, jsLogger({ enabled: false }));
+    mapproxyConfigClient = new MapproxyConfigClient(configMock, jsLogger({ enabled: false }), tracerMock);
     queueClient = new QueueClient(configMock, jsLogger({ enabled: false }), configMock.get<IQueueConfig>('queue'));
 
     console.warn = jest.fn();
@@ -36,8 +37,8 @@ describe('CacheSeedManager', () => {
       override: [...getContainerConfig()],
       useChild: false,
     });
-    mapproxySeed = new MapproxySeed(jsLogger({ enabled: false }), configMock, mapproxyConfigClient);
-    cacheSeedManager = new CacheSeedManager(jsLogger({ enabled: false }), configMock, queueClient, mapproxySeed);
+    mapproxySeed = new MapproxySeed(jsLogger({ enabled: false }), configMock, tracerMock, mapproxyConfigClient);
+    cacheSeedManager = new CacheSeedManager(jsLogger({ enabled: false }), configMock, tracerMock, queueClient, mapproxySeed);
   });
 
   afterEach(function () {
@@ -102,6 +103,7 @@ describe('CacheSeedManager', () => {
 
     it('Reject task and increase attempts count', async function () {
       const task = getTask();
+      task.parameters.traceParentContext = { ...task.parameters.traceParentContext, traceparent: 'some-invalid-trace' };
       const job = getJob();
       const runTaskSpy = jest
         .spyOn(CacheSeedManager.prototype as unknown as { runTask: jest.Mock }, 'runTask')

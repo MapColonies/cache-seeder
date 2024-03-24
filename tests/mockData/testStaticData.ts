@@ -64,7 +64,9 @@ const task = {
       },
     ],
     catalogId: 'bf60bc17-aa2e-49df-9478-98b783b47b68',
-    spanId: '123456',
+    traceParentContext: {
+      traceparent: "00-cf79cb9964bce24d461321db4fdce4da-8eedc8e68d60730c-01"
+    },
     cacheType: CacheType.REDIS,
   },
   resettable: false,

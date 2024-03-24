@@ -3,6 +3,8 @@ import { $, ProcessOutput } from 'zx';
 import { dump } from 'js-yaml';
 import { Logger } from '@map-colonies/js-logger';
 import { inject, singleton } from 'tsyringe';
+import { Tracer, trace } from '@opentelemetry/api';
+import { withSpanAsyncV4 } from '@map-colonies/telemetry';
 import { SERVICES } from '../common/constants';
 import { IConfig, ISeed } from '../common/interfaces';
 import { MapproxyConfigClient } from '../clients/mapproxyConfig';
@@ -25,15 +27,17 @@ export class MapproxySeed {
   public constructor(
     @inject(SERVICES.LOGGER) private readonly logger: Logger,
     @inject(SERVICES.CONFIG) private readonly config: IConfig,
+    @inject(SERVICES.TRACER) public readonly tracer: Tracer,
     private readonly mapproxyConfigClient: MapproxyConfigClient
   ) {
     this.mapproxyYamlDir = this.config.get<string>('mapproxy.mapproxyYamlDir');
     this.seedYamlDir = this.config.get<string>('mapproxy.seedYamlDir');
     this.geometryCoverageFilePath = this.config.get<string>('mapproxy.geometryTxtFile');
-    this.seedConcurrency = 5;
+    this.seedConcurrency = this.config.get<number>('seedConcurrency');
     this.mapproxySeedProgressDir = this.config.get<string>('mapproxy.seedProgressFileDir');
   }
 
+  @withSpanAsyncV4
   public async runSeed(task: ISeed, jobId: string, taskId: string): Promise<void> {
     this.logger.info({
       msg: `processing ${task.mode} for job of ${task.layerId}`,
@@ -46,7 +50,21 @@ export class MapproxySeed {
       toZoom: task.toZoomLevel,
       refreshBefore: task.refreshBefore,
     });
-
+    const spanActive = trace.getActiveSpan();
+    spanActive?.setAttributes({
+      // eslint-disable-next-line @typescript-eslint/naming-convention
+      'mapcolonies.raster.jobId': jobId,
+      // eslint-disable-next-line @typescript-eslint/naming-convention
+      'mapcolonies.raster.taskId': taskId,
+      // eslint-disable-next-line @typescript-eslint/naming-convention
+      'mapcolonies.raster.seedMode': task.mode,
+      // eslint-disable-next-line @typescript-eslint/naming-convention
+      'mapcolonies.raster.layerId': task.layerId,
+      // eslint-disable-next-line @typescript-eslint/naming-convention
+      'mapcolonies.raster.grids': task.grid,
+      // eslint-disable-next-line @typescript-eslint/naming-convention
+      'mapcolonies.raster.refreshBefore': task.refreshBefore,
+    });
     try {
       // Pre data validation
       if (!zoomComparison(task.fromZoomLevel, task.toZoomLevel)) {
@@ -78,7 +96,18 @@ export class MapproxySeed {
     }
   }
 
+  @withSpanAsyncV4
   private async writeGeojsonTxtFile(path: string, data: string, jobId: string, taskId: string): Promise<void> {
+    const spanActive = trace.getActiveSpan();
+    spanActive?.setAttributes({
+      // eslint-disable-next-line @typescript-eslint/naming-convention
+      'mapcolonies.raster.jobId': jobId,
+      // eslint-disable-next-line @typescript-eslint/naming-convention
+      'mapcolonies.raster.taskId': taskId,
+      // eslint-disable-next-line @typescript-eslint/naming-convention
+      'mapcolonies.raster.path': path,
+    });
+
     try {
       this.logger.info({ msg: `Generating geoJson coverage file: ${path}`, jobId, taskId });
       await fsp.writeFile(path, data, 'utf8');
@@ -88,6 +117,7 @@ export class MapproxySeed {
     }
   }
 
+  @withSpanAsyncV4
   private async createSeedYamlFile(seedOptions: ISeed, jobId: string, taskId: string): Promise<void> {
     this.logger.info({
       msg: `Generating seed.yaml file to ${seedOptions.mode} task`,
@@ -222,7 +252,16 @@ export class MapproxySeed {
     return jsonSeeds;
   }
 
+  // eslint-disable-next-line @typescript-eslint/member-ordering
+  @withSpanAsyncV4
   private async writeMapproxyYaml(jobId: string, taskId: string, currentMapproxyConfig: string): Promise<void> {
+    const spanActive = trace.getActiveSpan();
+    spanActive?.setAttributes({
+      // eslint-disable-next-line @typescript-eslint/naming-convention
+      'mapcolonies.raster.jobId': jobId,
+      // eslint-disable-next-line @typescript-eslint/naming-convention
+      'mapcolonies.raster.taskId': taskId,
+    });
     try {
       this.logger.info({ msg: `Generating current mapproxy config yaml to: ${this.mapproxyYamlDir}`, jobId, taskId });
       this.logger.debug({ msg: `current mapproxy yaml config`, mapproxyYaml: currentMapproxyConfig, jobId, taskId });
@@ -233,7 +272,24 @@ export class MapproxySeed {
     }
   }
 
+  // eslint-disable-next-line @typescript-eslint/member-ordering
+  @withSpanAsyncV4
   private async executeSeed(options: ISeed, jobId: string, taskId: string): Promise<void> {
+    const spanActive = trace.getActiveSpan();
+    spanActive?.setAttributes({
+      // eslint-disable-next-line @typescript-eslint/naming-convention
+      'mapcolonies.raster.jobId': jobId,
+      // eslint-disable-next-line @typescript-eslint/naming-convention
+      'mapcolonies.raster.taskId': taskId,
+      // eslint-disable-next-line @typescript-eslint/naming-convention
+      'mapcolonies.raster.seedMode': options.mode,
+      // eslint-disable-next-line @typescript-eslint/naming-convention
+      'mapcolonies.raster.layerId': options.layerId,
+      // eslint-disable-next-line @typescript-eslint/naming-convention
+      'mapcolonies.raster.grids': options.grid,
+      // eslint-disable-next-line @typescript-eslint/naming-convention
+      'mapcolonies.raster.refreshBefore': options.refreshBefore,
+    });
     try {
       const flags = [
         '-f', // mapproxy yaml directory
@@ -251,8 +307,11 @@ export class MapproxySeed {
         this.logger.info('requested to skip uncached tiles');
         flags.push('--skip-uncached');
       }
-
+      // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
+      const cmdStr = `mapproxy-seed ${flags}`;
+      this.logger.info({ msg: 'Execute cli command for seed', command: cmdStr });
       const cmd = $`mapproxy-seed ${flags}`;
+
       // promise wrap to synchronized zx internal events with node run time event
       await new Promise<void>((resolve, reject) => {
         cmd.stdout
