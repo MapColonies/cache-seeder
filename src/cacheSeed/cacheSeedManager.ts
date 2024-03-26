@@ -2,7 +2,7 @@ import { Logger } from '@map-colonies/js-logger';
 import { inject, singleton } from 'tsyringe';
 import { OperationStatus, ITaskResponse } from '@map-colonies/mc-priority-queue';
 import { asyncCallWithSpan, withSpanAsyncV4 } from '@map-colonies/telemetry';
-import { Tracer, trace } from '@opentelemetry/api';
+import { SpanOptions, Tracer, trace } from '@opentelemetry/api';
 import { SERVICES } from '../common/constants';
 import { IConfig, IJobParams, ITaskParams, ISeed } from '../common/interfaces';
 import { MapproxySeed } from '../mapproxyUtils/mapproxySeed';
@@ -36,75 +36,19 @@ export class CacheSeedManager {
     if (!tilesTask) {
       return Boolean(tilesTask);
     }
-    let spanOptions = undefined;
-    try {
-      if (tilesTask.parameters.traceParentContext) {
-        spanOptions = getSpanLinkOption(tilesTask.parameters.traceParentContext); // add link to trigging parent trace (overseer)
-        spanOptions.attributes = {
-          // eslint-disable-next-line @typescript-eslint/naming-convention
-          'mapcolonies.raster.jobId': tilesTask.jobId,
-          // eslint-disable-next-line @typescript-eslint/naming-convention
-          'mapcolonies.raster.taskId': tilesTask.id,
-          // eslint-disable-next-line @typescript-eslint/naming-convention
-          'mapcolonies.raster.layerId': tilesTask.parameters.catalogId,
-        };
-      }
-    } catch (err) {
-      this.logger.warn({ msg: `No trace parent link data exists`, err: (err as Error).message });
-    }
+
+    const spanOptions = this.getInitialSpanOption(tilesTask);
+
     return asyncCallWithSpan(
       async () => {
-        const validCacheType = await this.isValidCacheType(tilesTask);
-        if (!validCacheType) {
-          return validCacheType;
-        }
-
-        const job = await this.queueClient.jobsClient.getJob<IJobParams, ITaskParams>(tilesTask.jobId);
-        const { jobId, id: taskId, attempts, parameters } = tilesTask;
-        const seeds = parameters.seedTasks;
-
-        this.logger.info({
-          msg: `Found new seed job: ${jobId}`,
-          jobId,
-          taskId,
-          productId: job.resourceId,
-          productVersion: job.version,
-          productType: job.productType,
-        });
-
-        if (attempts > this.seedAttempts) {
-          this.logger.warn({
-            msg: `Reached to max attempts and will close task as failed`,
-            maxServiceAttempts: this.seedAttempts,
-            currentTaskAttemps: attempts,
-            jobId,
-            taskId,
-          });
-          await this.queueClient.queueHandlerForTileSeedingTasks.reject(jobId, taskId, false);
-          await this.queueClient.queueHandlerForTileSeedingTasks.jobManagerClient.updateJob(jobId, { status: OperationStatus.FAILED });
-          return false;
-        }
-
-        try {
-          await this.delay(this.gracefulReloadMaxSeconds);
-          await this.runTask(seeds, jobId, taskId);
-          await this.queueClient.queueHandlerForTileSeedingTasks.ack(jobId, taskId);
-          await this.queueClient.queueHandlerForTileSeedingTasks.jobManagerClient.updateJob(jobId, {
-            status: OperationStatus.COMPLETED,
-            percentage: 100,
-          });
-        } catch (error) {
-          await this.queueClient.queueHandlerForTileSeedingTasks.reject(jobId, taskId, true, (error as Error).message);
-        }
-
-        // complete the current pool
-        return Boolean(tilesTask);
+        return this.run(tilesTask);
       },
       this.tracer,
       'handleCacheSeedTask',
       spanOptions
     );
   }
+
   public async delay(seconds: number): Promise<void> {
     this.logger.info(`waiting before executing by gracefulReloadRandomSeconds delay for -${seconds}- seconds `);
     await new Promise((resolve) => setTimeout(resolve, seconds * this.msToSeconds));
@@ -157,5 +101,87 @@ export class CacheSeedManager {
     } else {
       return true;
     }
+  }
+
+  /**
+   * This function parse seedTask and generate SpanOption object to be passed, attach Link object to Span parent if exists, and metadata attributes
+   * @param tilesTask seed task to be executed
+   * @returns SpanOption object with attributes and optional links array
+   */
+  private getInitialSpanOption(tilesTask: ITaskResponse<ITaskParams>): SpanOptions {
+    let spanLinks;
+    const spanOptions: SpanOptions = {
+      attributes: {
+        // eslint-disable-next-line @typescript-eslint/naming-convention
+        'mapcolonies.raster.jobId': tilesTask.jobId,
+        // eslint-disable-next-line @typescript-eslint/naming-convention
+        'mapcolonies.raster.taskId': tilesTask.id,
+        // eslint-disable-next-line @typescript-eslint/naming-convention
+        'mapcolonies.raster.layerId': tilesTask.parameters.catalogId,
+      },
+    };
+    try {
+      if (tilesTask.parameters.traceParentContext) {
+        spanLinks = getSpanLinkOption(tilesTask.parameters.traceParentContext); // add link to trigging parent trace (overseer)
+        spanOptions.links = spanLinks;
+      }
+    } catch (err) {
+      this.logger.warn({
+        msg: `No trace parent link data exists`,
+        jobId: tilesTask.jobId,
+        taskId: tilesTask.id,
+        layerId: tilesTask.parameters.catalogId,
+        err: (err as Error).message,
+      });
+    }
+    return spanOptions;
+  }
+
+  private async run(tilesTask: ITaskResponse<ITaskParams>): Promise<boolean> {
+    const validCacheType = await this.isValidCacheType(tilesTask);
+    if (!validCacheType) {
+      return validCacheType;
+    }
+
+    const job = await this.queueClient.jobsClient.getJob<IJobParams, ITaskParams>(tilesTask.jobId);
+    const { jobId, id: taskId, attempts, parameters } = tilesTask;
+    const seeds = parameters.seedTasks;
+
+    this.logger.info({
+      msg: `Found new seed job: ${jobId}`,
+      jobId,
+      taskId,
+      productId: job.resourceId,
+      productVersion: job.version,
+      productType: job.productType,
+    });
+
+    if (attempts > this.seedAttempts) {
+      this.logger.warn({
+        msg: `Reached to max attempts and will close task as failed`,
+        maxServiceAttempts: this.seedAttempts,
+        currentTaskAttemps: attempts,
+        jobId,
+        taskId,
+      });
+      await this.queueClient.queueHandlerForTileSeedingTasks.reject(jobId, taskId, false);
+      await this.queueClient.queueHandlerForTileSeedingTasks.jobManagerClient.updateJob(jobId, { status: OperationStatus.FAILED });
+      return false;
+    }
+
+    try {
+      await this.delay(this.gracefulReloadMaxSeconds);
+      await this.runTask(seeds, jobId, taskId);
+      await this.queueClient.queueHandlerForTileSeedingTasks.ack(jobId, taskId);
+      await this.queueClient.queueHandlerForTileSeedingTasks.jobManagerClient.updateJob(jobId, {
+        status: OperationStatus.COMPLETED,
+        percentage: 100,
+      });
+    } catch (error) {
+      await this.queueClient.queueHandlerForTileSeedingTasks.reject(jobId, taskId, true, (error as Error).message);
+    }
+
+    // complete the current pool
+    return Boolean(tilesTask);
   }
 }

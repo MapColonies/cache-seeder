@@ -1,5 +1,5 @@
 import { Tracing } from '@map-colonies/telemetry';
-import { SpanOptions } from '@opentelemetry/api';
+import { Link } from '@opentelemetry/api';
 import * as api from '@opentelemetry/api';
 import { AsyncHooksContextManager } from '@opentelemetry/context-async-hooks';
 import { HttpInstrumentation } from '@opentelemetry/instrumentation-http';
@@ -20,7 +20,7 @@ export const tracing = new Tracing(
   { serviceName: SERVICE_NAME, serviceVersion: SERVICE_VERSION }
 );
 
-export const getSpanLinkOption = (context: ITraceParentContext): SpanOptions => {
+export const getSpanLinkOption = (context: ITraceParentContext): Link[] => {
   if (context.traceparent === undefined) {
     throw Error(`TraceParentContext is undefined`);
   }
@@ -30,6 +30,6 @@ export const getSpanLinkOption = (context: ITraceParentContext): SpanOptions => 
     const invalidParts = `${parts.join('|')}`;
     throw Error(`TraceParentContext include not valid traceparent object: ${invalidParts}`);
   }
-  const spanOptions: SpanOptions = { links: [{ context: { spanId: parts[2], traceFlags: parseInt(parts[3]), traceId: parts[1] } }] };
-  return spanOptions;
+  const spanLinks: Link[] = [{ context: { spanId: parts[2], traceFlags: parseInt(parts[3]), traceId: parts[1] } }];
+  return spanLinks;
 };
