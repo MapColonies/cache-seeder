@@ -3,10 +3,11 @@ import { $, ProcessOutput } from 'zx';
 import { dump } from 'js-yaml';
 import { Logger } from '@map-colonies/js-logger';
 import { inject, singleton } from 'tsyringe';
+import { Tracer, trace } from '@opentelemetry/api';
+import { withSpanAsyncV4 } from '@map-colonies/telemetry';
 import { SERVICES } from '../common/constants';
 import { IConfig, ISeed } from '../common/interfaces';
 import { MapproxyConfigClient } from '../clients/mapproxyConfig';
-/* eslint-disable @typescript-eslint/naming-convention */
 import { BaseCache, Cleanup, Seed, seedsSchema, cleanupsSchema, baseSchema } from '../common/schemas/seeds';
 import { Coverage, coveragesSchema } from '../common/schemas/coverages';
 import { SeedMode } from '../common/enums';
@@ -28,6 +29,7 @@ export class MapproxySeed {
   public constructor(
     @inject(SERVICES.LOGGER) private readonly logger: Logger,
     @inject(SERVICES.CONFIG) private readonly config: IConfig,
+    @inject(SERVICES.TRACER) public readonly tracer: Tracer,
     private readonly mapproxyConfigClient: MapproxyConfigClient
   ) {
     this.mapproxyYamlDir = this.config.get<string>('mapproxy.mapproxyYamlDir');
@@ -40,11 +42,11 @@ export class MapproxySeed {
     this.bumpFactor = 2;
   }
 
+  @withSpanAsyncV4
   public async runSeed(task: ISeed, jobId: string, taskId: string): Promise<void> {
     task.refreshBefore = this.addTimeMinuteBuffer(task.refreshBefore);
 
-    this.logger.info({
-      msg: `processing ${task.mode} for job of ${task.layerId}`,
+    const logObject = {
       jobId,
       taskId,
       layerId: task.layerId,
@@ -53,7 +55,23 @@ export class MapproxySeed {
       fromZoom: task.fromZoomLevel,
       toZoom: task.toZoomLevel,
       refreshBefore: task.refreshBefore,
+    };
+    const logMsg = `processing ${task.mode} for job of ${task.layerId}`;
+    this.logger.info(logObject, logMsg);
+
+    const spanActive = trace.getActiveSpan();
+    spanActive?.setAttributes({
+      /* eslint-disable @typescript-eslint/naming-convention */
+      'mapcolonies.raster.jobId': jobId,
+      'mapcolonies.raster.taskId': taskId,
+      'mapcolonies.raster.seedMode': task.mode,
+      'mapcolonies.raster.layerId': task.layerId,
+      'mapcolonies.raster.grids': task.grid,
+      'mapcolonies.raster.refreshBefore': task.refreshBefore,
+      /* eslint-enable @typescript-eslint/naming-convention */
     });
+
+    spanActive?.addEvent(logMsg, logObject);
 
     try {
       // Pre data validation
@@ -106,9 +124,23 @@ export class MapproxySeed {
     return validSeedDateFormatted;
   }
 
+  // eslint-disable-next-line @typescript-eslint/member-ordering
+  @withSpanAsyncV4
   private async writeGeojsonTxtFile(path: string, data: string, jobId: string, taskId: string): Promise<void> {
+    const spanActive = trace.getActiveSpan();
+    spanActive?.setAttributes({
+      /* eslint-disable @typescript-eslint/naming-convention */
+      'mapcolonies.raster.jobId': jobId,
+      'mapcolonies.raster.taskId': taskId,
+      'mapcolonies.raster.path': path,
+      /* eslint-enable @typescript-eslint/naming-convention */
+    });
+
     try {
-      this.logger.info({ msg: `Generating geoJson coverage file: ${path}`, jobId, taskId });
+      const logInfoMsg = `Generating geoJson coverage file: ${path}`;
+      const logInfoObj = { path, jobId, taskId };
+      this.logger.info(logInfoObj, logInfoMsg);
+      spanActive?.addEvent(logInfoMsg, logInfoObj);
       await fsp.writeFile(path, data, 'utf8');
     } catch (err) {
       this.logger.error({ msg: 'Failed on generating geometry coverage file', jobId, taskId, err });
@@ -116,14 +148,30 @@ export class MapproxySeed {
     }
   }
 
+  // eslint-disable-next-line @typescript-eslint/member-ordering
+  @withSpanAsyncV4
   private async createSeedYamlFile(seedOptions: ISeed, jobId: string, taskId: string): Promise<void> {
-    this.logger.info({
-      msg: `Generating seed.yaml file to ${seedOptions.mode} task`,
+    const logObj = {
       layerId: seedOptions.layerId,
-      mode: seedOptions.mode,
       jobId,
       taskId,
+      seedMode: seedOptions.mode,
+      fromZoomLevel: seedOptions.fromZoomLevel,
+      toZoomLevel: seedOptions.toZoomLevel,
+    };
+    const logInfoMsg = `Generating seed.yaml file to ${seedOptions.mode} task`;
+    this.logger.info(logObj, logInfoMsg);
+    const spanActive = trace.getActiveSpan();
+    spanActive?.setAttributes({
+      /* eslint-disable @typescript-eslint/naming-convention */
+      'mapcolonies.raster.jobId': jobId,
+      'mapcolonies.raster.taskId': taskId,
+      'mapcolonies.raster.layerId': seedOptions.layerId,
+      'mapcolonies.raster.seedMode': seedOptions.mode,
+      /* eslint-enable @typescript-eslint/naming-convention */
     });
+    spanActive?.addEvent(logInfoMsg, logObj);
+
     try {
       // build the base cache object related to seed\clean job
       const coverageName = `${seedOptions.layerId}-coverage`;
@@ -223,6 +271,7 @@ export class MapproxySeed {
       seeds: {
         [seedOptions.layerId]: {
           ...cache,
+          // eslint-disable-next-line @typescript-eslint/naming-convention
           refresh_before: {
             time: seedOptions.refreshBefore,
           },
@@ -239,6 +288,7 @@ export class MapproxySeed {
       cleanups: {
         [seedOptions.layerId]: {
           ...cache,
+          // eslint-disable-next-line @typescript-eslint/naming-convention
           remove_before: {
             time: seedOptions.refreshBefore,
           },
@@ -250,10 +300,22 @@ export class MapproxySeed {
     return jsonSeeds;
   }
 
+  // eslint-disable-next-line @typescript-eslint/member-ordering
+  @withSpanAsyncV4
   private async writeMapproxyYaml(jobId: string, taskId: string, currentMapproxyConfig: string): Promise<void> {
+    const spanActive = trace.getActiveSpan();
+    spanActive?.setAttributes({
+      /* eslint-disable @typescript-eslint/naming-convention */
+      'mapcolonies.raster.jobId': jobId,
+      'mapcolonies.raster.taskId': taskId,
+      /* eslint-enable @typescript-eslint/naming-convention */
+    });
     try {
-      this.logger.info({ msg: `Generating current mapproxy config yaml to: ${this.mapproxyYamlDir}`, jobId, taskId });
-      this.logger.debug({ msg: `current mapproxy yaml config`, mapproxyYaml: currentMapproxyConfig, jobId, taskId });
+      const logInfoMsg = `Generating current mapproxy config yaml to: ${this.mapproxyYamlDir}`;
+      const logObj = { jobId, taskId, mapproxyYamlDir: this.mapproxyYamlDir };
+      this.logger.info(logObj, logInfoMsg);
+      this.logger.debug({ ...logObj, mapproxyYaml: currentMapproxyConfig }, `current mapproxy yaml config`);
+      spanActive?.addEvent('generate mapproxy yaml', logObj);
       await fsp.writeFile(this.mapproxyYamlDir, currentMapproxyConfig, 'utf8');
     } catch (err) {
       this.logger.error({ msg: `Failed on generating mapproxy current yaml`, jobId, taskId, err });
@@ -261,7 +323,20 @@ export class MapproxySeed {
     }
   }
 
+  // eslint-disable-next-line @typescript-eslint/member-ordering
+  @withSpanAsyncV4
   private async executeSeed(options: ISeed, jobId: string, taskId: string): Promise<void> {
+    const spanActive = trace.getActiveSpan();
+    spanActive?.setAttributes({
+      /* eslint-disable @typescript-eslint/naming-convention */
+      'mapcolonies.raster.jobId': jobId,
+      'mapcolonies.raster.taskId': taskId,
+      'mapcolonies.raster.seedMode': options.mode,
+      'mapcolonies.raster.layerId': options.layerId,
+      'mapcolonies.raster.grids': options.grid,
+      'mapcolonies.raster.refreshBefore': options.refreshBefore,
+      /* eslint-enable @typescript-eslint/naming-convention */
+    });
     try {
       const flags = [
         '-f', // mapproxy yaml directory
@@ -279,9 +354,11 @@ export class MapproxySeed {
         this.logger.info('requested to skip uncached tiles');
         flags.push('--skip-uncached');
       }
+      // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
+      const cmdStr = `mapproxy-seed ${flags.join(' ')}`;
+      this.logger.info({ msg: 'Execute cli command for seed', command: cmdStr });
+      spanActive?.addEvent(cmdStr);
 
-      /* eslint-disable @typescript-eslint/restrict-template-expressions */
-      this.logger.info({ msg: 'Execute cli command for seed', command: `mapproxy-seed ${flags}` });
       const cmd = $`mapproxy-seed ${flags}`;
       // promise wrap to synchronized zx internal events with node run time event
       await new Promise<void>((resolve, reject) => {

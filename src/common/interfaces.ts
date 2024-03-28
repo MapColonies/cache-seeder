@@ -83,6 +83,11 @@ export interface ISeed {
 export interface ITaskParams {
   seedTasks: ISeed[];
   catalogId: string;
-  spanId: string;
+  traceParentContext?: ITraceParentContext;
   cacheType: CacheType;
+}
+
+export interface ITraceParentContext {
+  traceparent?: string;
+  tracestate?: string;
 }

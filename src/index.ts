@@ -1,6 +1,7 @@
 // this import must be called before the first import of tsyringe
 import 'reflect-metadata';
 import { createServer } from 'http';
+import { setTimeout as setTimeoutPromise } from 'timers/promises';
 import { createTerminus } from '@godaddy/terminus';
 import { Logger } from '@map-colonies/js-logger';
 import { container } from 'tsyringe';
@@ -33,11 +34,11 @@ const mainLoop = async (): Promise<void> => {
     try {
       const taskProcessed = await cacheSeedManager.handleCacheSeedTask();
       if (!taskProcessed) {
-        await new Promise((resolve) => setTimeout(resolve, dequeueIntervalMs));
+        await setTimeoutPromise(dequeueIntervalMs);
       }
     } catch (error) {
       logger.fatal(`mainLoop: Error: ${JSON.stringify(error, Object.getOwnPropertyNames(error))}`);
-      await new Promise((resolve) => setTimeout(resolve, dequeueIntervalMs));
+      await setTimeoutPromise(dequeueIntervalMs);
     }
   }
 };

@@ -6,6 +6,7 @@ import { init as initMockConfig, configMock, setValue, clear as clearMockConfig 
 import { MapproxyConfigClient } from '../../../src/clients/mapproxyConfig';
 import { getApp } from '../../../src/app';
 import { getContainerConfig, resetContainer } from '../testContainerConfig';
+import { tracerMock } from '../../mocks/tracer';
 
 let mapproxyConfigClient: MapproxyConfigClient;
 const mapproxyTestUrl = 'http://test';
@@ -20,7 +21,7 @@ describe('MapproxyConfigClient', () => {
       useChild: true,
     });
 
-    mapproxyConfigClient = new MapproxyConfigClient(configMock, jsLogger({ enabled: false }));
+    mapproxyConfigClient = new MapproxyConfigClient(configMock, jsLogger({ enabled: false }), tracerMock);
   });
   afterEach(function () {
     clearMockConfig();

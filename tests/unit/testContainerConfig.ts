@@ -8,8 +8,7 @@ import { InjectionObject } from '../../src/common/dependencyRegistration';
 import { IQueueConfig } from '../../src/common/interfaces';
 
 const queueConfig = configMock.get<IQueueConfig>('queue');
-tracing.start();
-const tracer = trace.getTracer('app');
+const tracer = trace.getTracer('testTracer');
 function getContainerConfig(): InjectionObject<unknown>[] {
   initConfig();
   return [

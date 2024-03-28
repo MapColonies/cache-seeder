@@ -1,6 +1,8 @@
+import { setTimeout as setTimeoutPromises } from 'timers/promises';
 import jsLogger from '@map-colonies/js-logger';
 import nock from 'nock';
 import { IHttpRetryConfig } from '@map-colonies/mc-utils';
+import { trace } from '@opentelemetry/api';
 import { CacheSeedManager } from '../../../src/cacheSeed/cacheSeedManager';
 import { configMock, init as initConfig, clear as clearConfig, setValue } from '../../mocks/config';
 import { getApp } from '../../../src/app';
@@ -11,6 +13,11 @@ import { MapproxySeed } from '../../../src/mapproxyUtils/mapproxySeed';
 import { IMapProxyConfig, IQueueConfig } from '../../../src/common/interfaces';
 import { getConfigMock } from '../../mocks/clients/mapproxyConfig';
 import { MapproxyConfigClient } from '../../../src/clients/mapproxyConfig';
+import { tracing } from '../../../src/common/tracing';
+import { SERVICE_NAME } from '../../../src/common/constants';
+
+tracing.start();
+const tracer = trace.getTracer(SERVICE_NAME);
 
 let queueClient: QueueClient;
 let mapproxyConfigClient: MapproxyConfigClient;
@@ -19,6 +26,9 @@ let dequeueStub: jest.SpyInstance;
 let ackStubForTileTasks: jest.SpyInstance;
 let rejectStubForTileTasks: jest.SpyInstance;
 let updateJobStub: jest.SpyInstance;
+jest.mock('timers/promises', () => ({
+  setTimeout: jest.fn().mockImplementation(() => undefined),
+}));
 
 describe('CacheSeedManager', () => {
   const jobManagerTestUrl = 'http://someJobManager';
@@ -28,7 +38,7 @@ describe('CacheSeedManager', () => {
     setValue('seedAttempts', 4);
     setValue('queue', { ...configMock.get<IQueueConfig>('queue'), jobManagerBaseUrl: jobManagerTestUrl });
     setValue('server.httpRetry', { ...configMock.get<IHttpRetryConfig>('server.httpRetry'), delay: 0 });
-    mapproxyConfigClient = new MapproxyConfigClient(configMock, jsLogger({ enabled: false }));
+    mapproxyConfigClient = new MapproxyConfigClient(configMock, jsLogger({ enabled: false }), tracer);
     queueClient = new QueueClient(configMock, jsLogger({ enabled: false }), configMock.get<IQueueConfig>('queue'));
     jest.spyOn(CacheSeedManager.prototype as unknown as { delay: jest.Mock }, 'delay').mockResolvedValue(undefined);
 
@@ -37,8 +47,8 @@ describe('CacheSeedManager', () => {
       override: [...getContainerConfig()],
       useChild: false,
     });
-    mapproxySeed = new MapproxySeed(jsLogger({ enabled: false }), configMock, mapproxyConfigClient);
-    cacheSeedManager = new CacheSeedManager(jsLogger({ enabled: false }), configMock, queueClient, mapproxySeed);
+    mapproxySeed = new MapproxySeed(jsLogger({ enabled: false }), configMock, tracer, mapproxyConfigClient);
+    cacheSeedManager = new CacheSeedManager(jsLogger({ enabled: false }), configMock, tracer, queueClient, mapproxySeed);
   });
 
   afterEach(function () {
@@ -103,6 +113,7 @@ describe('CacheSeedManager', () => {
 
     it('Reject task and increase attempts count', async function () {
       const task = getTask();
+      task.parameters.traceParentContext = { ...task.parameters.traceParentContext, traceparent: 'some-invalid-trace' };
       const job = getJob();
       const runTaskSpy = jest
         .spyOn(CacheSeedManager.prototype as unknown as { runTask: jest.Mock }, 'runTask')
@@ -200,14 +211,13 @@ describe('CacheSeedManager', () => {
   describe('#Delay', () => {
     it('Running timeout', async function () {
       jest.spyOn(CacheSeedManager.prototype as unknown as { delay: jest.Mock }, 'delay').mockRestore();
-      const setTimeoutMock = jest.spyOn(global, 'setTimeout');
 
       // action
       const action = async () => cacheSeedManager.delay(0.001);
 
       await expect(action()).resolves.not.toThrow();
-      expect(setTimeoutMock).toHaveBeenCalledTimes(1);
-      expect(setTimeoutMock).toHaveBeenCalledWith(expect.anything(), 1);
+      expect(setTimeoutPromises).toHaveBeenCalledTimes(1);
+      expect(setTimeoutPromises).toHaveBeenCalledWith(1);
     });
   });
 });
