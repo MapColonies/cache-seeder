@@ -1,8 +1,9 @@
+import { setTimeout as setTimeoutPromise } from 'timers/promises';
 import { Logger } from '@map-colonies/js-logger';
 import { inject, singleton } from 'tsyringe';
 import { OperationStatus, ITaskResponse } from '@map-colonies/mc-priority-queue';
-import { asyncCallWithSpan, withSpanAsyncV4 } from '@map-colonies/telemetry';
-import { SpanOptions, Tracer, trace } from '@opentelemetry/api';
+import { withSpanAsyncV4 } from '@map-colonies/telemetry';
+import { SpanOptions, SpanStatusCode, Tracer, trace } from '@opentelemetry/api';
 import { SERVICES } from '../common/constants';
 import { IConfig, IJobParams, ITaskParams, ISeed } from '../common/interfaces';
 import { MapproxySeed } from '../mapproxyUtils/mapproxySeed';
@@ -38,47 +39,48 @@ export class CacheSeedManager {
     }
 
     const spanOptions = this.getInitialSpanOption(tilesTask);
-
-    return asyncCallWithSpan(
-      async () => {
-        return this.run(tilesTask);
-      },
-      this.tracer,
-      'handleCacheSeedTask',
-      spanOptions
-    );
+    return this.tracer.startActiveSpan('handleCacheSeedTask', spanOptions, async (span) => {
+      try {
+        const shouldNotWait = await this.run(tilesTask);
+        span.setStatus({ code: shouldNotWait ? SpanStatusCode.OK : SpanStatusCode.ERROR });
+        return shouldNotWait;
+      } catch (error) {
+        span.setStatus({ code: SpanStatusCode.ERROR });
+        span.recordException(error as Error);
+        throw error;
+      } finally {
+        span.end();
+      }
+    });
   }
 
   public async delay(seconds: number): Promise<void> {
     this.logger.info(`waiting before executing by gracefulReloadRandomSeconds delay for -${seconds}- seconds `);
-    await new Promise((resolve) => setTimeout(resolve, seconds * this.msToSeconds));
+    await setTimeoutPromise(seconds * this.msToSeconds);
   }
 
   // eslint-disable-next-line @typescript-eslint/member-ordering
   @withSpanAsyncV4
   private async runTask(seedTasks: ISeed[], jobId: string, taskId: string): Promise<void> {
     const spanActive = trace.getActiveSpan();
+
     spanActive?.setAttributes({
-      // eslint-disable-next-line @typescript-eslint/naming-convention
+      /* eslint-disable @typescript-eslint/naming-convention */
       'mapcolonies.raster.jobId': jobId,
-      // eslint-disable-next-line @typescript-eslint/naming-convention
       'mapcolonies.raster.taskId': taskId,
-      // eslint-disable-next-line @typescript-eslint/naming-convention
+      /* eslint-enable @typescript-eslint/naming-convention */
     });
     for (const task of seedTasks) {
+      const logObj = { mode: task.mode, layerId: task.layerId, jobId, taskId };
       // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
       if (task.mode === SeedMode.SEED || task.mode === SeedMode.CLEAN) {
-        spanActive?.setAttribute('mapcolonies.raster.jobType', task.mode);
+        spanActive?.setAttribute('mapcolonies.raster.seedMode', task.mode);
+        spanActive?.addEvent('seedTask', logObj);
         await this.mapproxySeed.runSeed(task, jobId, taskId);
       } else {
-        this.logger.error({
-          msg: `Unsupported seeding mode: ${task.mode as string}, should be one of: 'seed' or 'clean'`,
-          mode: task.mode,
-          layerId: task.layerId,
-          jobId,
-          taskId,
-        });
-        throw new Error(`Unsupported seeding mode: ${task.mode as string}, should be one of: 'seed' or 'clean'`);
+        const logErrMsg = `Unsupported seeding mode: ${task.mode as string}, should be one of: 'seed' or 'clean'`;
+        this.logger.error(logObj, logErrMsg);
+        throw new Error(logErrMsg);
       }
     }
   }
@@ -112,12 +114,12 @@ export class CacheSeedManager {
     let spanLinks;
     const spanOptions: SpanOptions = {
       attributes: {
-        // eslint-disable-next-line @typescript-eslint/naming-convention
+        /* eslint-disable @typescript-eslint/naming-convention */
         'mapcolonies.raster.jobId': tilesTask.jobId,
-        // eslint-disable-next-line @typescript-eslint/naming-convention
         'mapcolonies.raster.taskId': tilesTask.id,
-        // eslint-disable-next-line @typescript-eslint/naming-convention
+        'mapcolonies.raster.catalogId': tilesTask.parameters.seedTasks[0].layerId,
         'mapcolonies.raster.layerId': tilesTask.parameters.catalogId,
+        /* eslint-enable @typescript-eslint/naming-convention */
       },
     };
     try {
@@ -126,13 +128,9 @@ export class CacheSeedManager {
         spanOptions.links = spanLinks;
       }
     } catch (err) {
-      this.logger.warn({
-        msg: `No trace parent link data exists`,
-        jobId: tilesTask.jobId,
-        taskId: tilesTask.id,
-        layerId: tilesTask.parameters.catalogId,
-        err: (err as Error).message,
-      });
+      const logWarnMsg = `No trace parent link data exists`;
+      const logObj = { jobId: tilesTask.jobId, taskId: tilesTask.id, layerId: tilesTask.parameters.catalogId, err: (err as Error).message };
+      this.logger.warn(logObj, logWarnMsg);
     }
     return spanOptions;
   }
@@ -147,23 +145,18 @@ export class CacheSeedManager {
     const { jobId, id: taskId, attempts, parameters } = tilesTask;
     const seeds = parameters.seedTasks;
 
-    this.logger.info({
-      msg: `Found new seed job: ${jobId}`,
-      jobId,
-      taskId,
-      productId: job.resourceId,
-      productVersion: job.version,
-      productType: job.productType,
-    });
+    const logInfoMsg = `Found new seed job: ${jobId}`;
+    const logObj = { jobId, taskId, productId: job.resourceId, productVersion: job.version, productType: job.productType };
+
+    this.logger.info(logObj, logInfoMsg);
+    trace.getActiveSpan()?.addEvent(logInfoMsg, logObj);
 
     if (attempts > this.seedAttempts) {
-      this.logger.warn({
-        msg: `Reached to max attempts and will close task as failed`,
-        maxServiceAttempts: this.seedAttempts,
-        currentTaskAttemps: attempts,
-        jobId,
-        taskId,
-      });
+      const logWarnMsg = `Reached to max attempts and will close task as failed`;
+      const logWarnObj = { maxServiceAttempts: this.seedAttempts, currentTaskAttemps: attempts, jobId, taskId };
+      this.logger.warn(logWarnObj, logWarnMsg);
+      trace.getActiveSpan()?.addEvent(logWarnMsg, logWarnObj);
+
       await this.queueClient.queueHandlerForTileSeedingTasks.reject(jobId, taskId, false);
       await this.queueClient.queueHandlerForTileSeedingTasks.jobManagerClient.updateJob(jobId, { status: OperationStatus.FAILED });
       return false;
@@ -179,6 +172,8 @@ export class CacheSeedManager {
       });
     } catch (error) {
       await this.queueClient.queueHandlerForTileSeedingTasks.reject(jobId, taskId, true, (error as Error).message);
+      trace.getActiveSpan()?.recordException(error as Error);
+      return false;
     }
 
     // complete the current pool

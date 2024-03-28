@@ -4,7 +4,7 @@ import * as api from '@opentelemetry/api';
 import { AsyncHooksContextManager } from '@opentelemetry/context-async-hooks';
 import { HttpInstrumentation } from '@opentelemetry/instrumentation-http';
 import { ITraceParentContext } from './interfaces';
-import { SERVICE_NAME, SERVICE_VERSION } from './constants';
+import { NODE_VERSION } from './constants';
 
 const contextManager = new AsyncHooksContextManager();
 contextManager.enable();
@@ -17,7 +17,7 @@ export const tracing = new Tracing(
     '@opentelemetry/instrumentation-express': { enabled: false },
   },
   // todo - after architecture design understand which global shared attributes also to add
-  { serviceName: SERVICE_NAME, serviceVersion: SERVICE_VERSION }
+  { nodeVersion: NODE_VERSION }
 );
 
 export const getSpanLinkOption = (context: ITraceParentContext): Link[] => {
