@@ -51,9 +51,11 @@ class RedisCache(TileCacheBase):
         self.ttl = ttl
 
         ssl_enabled = get_redis_variable("REDIS_TLS")
+        log.info("ssl enabled value is", ssl_enabled)
         ssl_certfile = self.ssl_certfile if ssl_enabled else None
         ssl_keyfile = self.ssl_keyfile if ssl_enabled else None
-        ssl_ca_certs = self.ssl_ca_certs if ssl_enabled and self.ssl_ca_certs else None)
+        ssl_ca_certs = self.ssl_ca_certs if ssl_enabled else None
+      
 
         self.r = redis.StrictRedis(
             host=host, 

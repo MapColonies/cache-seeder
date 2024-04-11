@@ -37,7 +37,7 @@ redis: # same hierarchy as in mapproxy-api values
     enableRedisUser: false
     username: ""
     password: ""
-  tls: true  
+  tls: false  
 
 secretName: ""
 enabled: true
