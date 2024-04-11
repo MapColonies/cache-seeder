@@ -37,7 +37,9 @@ log = logging.getLogger(__name__)
 
 
 class RedisCache(TileCacheBase):
-    def __init__(self, host, port, prefix, ttl=0, db=0):
+    def __init__(
+            self, host, port, prefix, ttl=0, db=0 ,ssl_certfile=None,
+            ssl_keyfile=None, ssl_ca_certs=None):
         if redis is None:
             raise ImportError("Redis backend requires 'redis' package.")
         
@@ -47,7 +49,23 @@ class RedisCache(TileCacheBase):
         self.prefix = prefix
         self.lock_cache_id = 'redis-' + hashlib.md5((host + str(port) + prefix + str(db)).encode('utf-8')).hexdigest()
         self.ttl = ttl
-        self.r = redis.StrictRedis(host=host, port=port, db=db, password=password, username=user)
+
+        ssl_enabled = get_redis_variable("REDIS_TLS")
+        ssl_certfile = self.ssl_certfile if ssl_enabled else None
+        ssl_keyfile = self.ssl_keyfile if ssl_enabled else None
+        ssl_ca_certs = self.ssl_ca_certs if ssl_enabled and self.ssl_ca_certs else None)
+
+        self.r = redis.StrictRedis(
+            host=host, 
+            port=port, 
+            db=db, 
+            username=username, 
+            password=password, 
+            ssl_certfile=ssl_certfile,
+            ssl_keyfile=ssl_keyfile,
+            ssl_ca_certs=ssl_ca_certs,
+            ssl=ssl_enabled      
+        )
 
     def _key(self, tile):
         x, y, z = tile.coord
@@ -128,3 +146,10 @@ class RedisCache(TileCacheBase):
         key = self._key(tile)
         self.r.delete(key)
         return True
+
+def get_redis_variable(name):
+    env_var = os.environ.get(name, "false")
+    if env_var.lower().strip() in ("true"):
+        return True
+    else:   
+        return False        

@@ -35,6 +35,7 @@ data:
   {{ if $redis.auth.enableRedisUser }}
   REDIS_PASSWORD: {{ $redis.auth.password | quote}}
   REDIS_USERNAME: {{ $redis.auth.username | quote}}
+  REDIS_TLS: {{ .Values.redis.tls | quote}}
   GRACEFUL_RELOAD_MAX_SECONDS: {{ .Values.global.gracefulReloadMaxSeconds | quote }}
   {{ end }}
 {{- end }}
