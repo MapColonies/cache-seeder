@@ -1331,7 +1331,7 @@ class CacheConfiguration(ConfigurationBase):
             db=db,
             prefix=prefix,
             ttl=ttl,
-            sl_certfile=ssl_certfile,
+            ssl_certfile=ssl_certfile,
             ssl_keyfile=ssl_keyfile,
             ssl_ca_certs=ssl_ca_certs
         )
