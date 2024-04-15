@@ -2,22 +2,18 @@ import { readFileSync, promises as fsp } from 'node:fs';
 import jsLogger from '@map-colonies/js-logger';
 import nock from 'nock';
 import { IHttpRetryConfig } from '@map-colonies/mc-utils';
+import * as cmd from '../../../src/common/cmd';
 import { configMock, init as initConfig, clear as clearConfig, setValue } from '../../mocks/config';
 import { getApp } from '../../../src/app';
-import { cmdProcessPromise, getTask } from '../../mockData/testStaticData';
+import { getTask } from '../../mockData/testStaticData';
 import { getContainerConfig, resetContainer } from '../testContainerConfig';
 import { MapproxySeed } from '../../../src/mapproxyUtils/mapproxySeed';
 import { IQueueConfig } from '../../../src/common/interfaces';
 import { MapproxyConfigClient } from '../../../src/clients/mapproxyConfig';
-import { $ } from 'zx';
 import { tracerMock } from '../../mocks/tracer';
 
 let mapproxyConfigClient: MapproxyConfigClient;
 let mapproxySeed: MapproxySeed;
-
-jest.mock('zx', () => ({
-  $: jest.fn().mockImplementation(() => cmdProcessPromise),
-}));
 
 describe('#MapproxySeed', () => {
   const jobManagerTestUrl = 'http://someJobManager';
@@ -64,6 +60,7 @@ describe('#MapproxySeed', () => {
       const getCleanupSpy = jest.spyOn(MapproxySeed.prototype as unknown as { getCleanup: jest.Mock }, 'getCleanup');
       const executeSeedSpy = jest.spyOn(MapproxySeed.prototype as unknown as { executeSeed: jest.Mock }, 'executeSeed');
 
+      const runCommandStub = jest.spyOn(cmd, 'runCommand').mockResolvedValue(undefined);
       writeFileStub = jest.spyOn(fsp, 'writeFile').mockImplementation(async () => undefined);
       accessStub = jest.spyOn(fsp, 'access').mockImplementation(async () => undefined);
 
@@ -84,21 +81,22 @@ describe('#MapproxySeed', () => {
       expect(getCleanupSpy).toHaveBeenCalledTimes(1);
       expect(writeFileStub).toHaveBeenNthCalledWith(3, configMock.get('mapproxy.seedYamlDir'), seedYamlContent);
       expect(executeSeedSpy).toHaveBeenCalledTimes(1);
-      expect($).toHaveBeenCalledTimes(1);
-      expect($).toHaveBeenCalledWith(
-        ['mapproxy-seed ', ''],
+      expect(runCommandStub).toHaveBeenCalledTimes(1);
+      expect(runCommandStub).toHaveBeenCalledWith(
+        configMock.get<string>('mapproxy_cmd_command'),
         [
           '-f',
           `${configMock.get('mapproxy.mapproxyYamlDir')}`,
           '-s',
           `${configMock.get('mapproxy.seedYamlDir')}`,
           '--concurrency',
-          5,
+          '5',
           '--progress-file',
           `${configMock.get('mapproxy.seedProgressFileDir')}_${task.parameters.seedTasks[1].mode}`,
           '--continue',
           '--skip-uncached',
-        ]
+        ],
+        expect.anything()
       );
     });
   });

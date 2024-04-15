@@ -2,7 +2,7 @@ import { readFileSync, promises as fsp } from 'node:fs';
 import jsLogger from '@map-colonies/js-logger';
 import nock from 'nock';
 import { IHttpRetryConfig } from '@map-colonies/mc-utils';
-import { $ } from 'zx';
+import * as cmd from '../../../src/common/cmd';
 import { configMock, init as initConfig, clear as clearConfig, setValue } from '../../mocks/config';
 import { getApp } from '../../../src/app';
 import { getTask } from '../../mockData/testStaticData';
@@ -11,14 +11,6 @@ import { MapproxySeed } from '../../../src/mapproxyUtils/mapproxySeed';
 import { IQueueConfig, ISeed } from '../../../src/common/interfaces';
 import { MapproxyConfigClient } from '../../../src/clients/mapproxyConfig';
 import { tracerMock } from '../../mocks/tracer';
-
-// most configured before describes
-const cliErrorMsg = 'Test CLI seeding error';
-jest.mock('zx', () => ({
-  $: jest.fn().mockImplementation(() => {
-    throw new Error(cliErrorMsg);
-  }),
-}));
 
 let mapproxySeed: MapproxySeed;
 let mapproxyConfigClient: MapproxyConfigClient;
@@ -68,6 +60,8 @@ describe('#MapproxySeed', () => {
         const createSeedYamlFileSpy = jest.spyOn(MapproxySeed.prototype as unknown as { createSeedYamlFile: jest.Mock }, 'createSeedYamlFile');
         const getSeedSpy = jest.spyOn(MapproxySeed.prototype as unknown as { getSeed: jest.Mock }, 'getSeed');
         const getCleanupSpy = jest.spyOn(MapproxySeed.prototype as unknown as { getCleanup: jest.Mock }, 'getCleanup');
+        const cmdSeedErrMsg = 'some running mapproxy-seed error';
+        const runCommandStub = jest.spyOn(cmd, 'runCommand').mockRejectedValue(new Error(cmdSeedErrMsg));
         const executeSeedSpy = jest.spyOn(MapproxySeed.prototype as unknown as { executeSeed: jest.Mock }, 'executeSeed');
 
         writeFileStub = jest.spyOn(fsp, 'writeFile').mockImplementation(async () => undefined);
@@ -77,7 +71,7 @@ describe('#MapproxySeed', () => {
           await mapproxySeed.runSeed(task.parameters.seedTasks[0], task.jobId, task.id);
         };
 
-        await expect(action).rejects.toThrow(`failed seed for job of test with reason: ${cliErrorMsg}`);
+        await expect(action).rejects.toThrow(`failed seed for job of test with reason: ${cmdSeedErrMsg}`);
         expect(writeMapproxyYamlSpy).toHaveBeenCalledTimes(1);
         expect(writeFileStub).toHaveBeenCalledTimes(3);
         expect(writeFileStub).toHaveBeenNthCalledWith(1, configMock.get('mapproxy.mapproxyYamlDir'), yamlContent, 'utf8');
@@ -94,24 +88,26 @@ describe('#MapproxySeed', () => {
         expect(getCleanupSpy).toHaveBeenCalledTimes(0);
         expect(writeFileStub).toHaveBeenNthCalledWith(3, configMock.get('mapproxy.seedYamlDir'), seedYamlContent);
         expect(executeSeedSpy).toHaveBeenCalledTimes(1);
-        expect($).toHaveBeenCalledTimes(1);
-        expect($).toHaveBeenCalledWith(
-          ['mapproxy-seed ', ''],
+        expect(runCommandStub).toHaveBeenCalledTimes(1);
+        expect(runCommandStub).toHaveBeenCalledWith(
+          configMock.get<string>('mapproxy_cmd_command'),
           [
             '-f',
             `${configMock.get('mapproxy.mapproxyYamlDir')}`,
             '-s',
             `${configMock.get('mapproxy.seedYamlDir')}`,
             '--concurrency',
-            5,
+            '5',
             '--progress-file',
             `${configMock.get('mapproxy.seedProgressFileDir')}_${task.parameters.seedTasks[0].mode}`,
             '--continue',
             '--skip-uncached',
-          ]
+          ],
+          expect.anything()
         );
       });
     });
+
     describe('#FailuresSeedTasks', () => {
       it('Failed on run main seed function (writeMapproxyYaml)', async function () {
         const task = getTask();

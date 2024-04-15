@@ -3,6 +3,7 @@ import { Logger } from '@map-colonies/js-logger';
 import { inject, singleton } from 'tsyringe';
 import { OperationStatus, ITaskResponse } from '@map-colonies/mc-priority-queue';
 import { withSpanAsyncV4 } from '@map-colonies/telemetry';
+import { INFRA_CONVENTIONS, RASTER_CONVENTIONS } from '@map-colonies/telemetry/conventions';
 import { SpanOptions, SpanStatusCode, Tracer, trace } from '@opentelemetry/api';
 import { SERVICES } from '../common/constants';
 import { IConfig, IJobParams, ITaskParams, ISeed } from '../common/interfaces';
@@ -55,7 +56,7 @@ export class CacheSeedManager {
   }
 
   public async delay(seconds: number): Promise<void> {
-    this.logger.info(`waiting before executing by gracefulReloadRandomSeconds delay for -${seconds}- seconds `);
+    this.logger.info(`waiting before executing by gracefulReloadRandomSeconds delay for - ${seconds} - seconds `);
     await setTimeoutPromise(seconds * this.msToSeconds);
   }
 
@@ -65,16 +66,14 @@ export class CacheSeedManager {
     const spanActive = trace.getActiveSpan();
 
     spanActive?.setAttributes({
-      /* eslint-disable @typescript-eslint/naming-convention */
-      'mapcolonies.raster.jobId': jobId,
-      'mapcolonies.raster.taskId': taskId,
-      /* eslint-enable @typescript-eslint/naming-convention */
+      [INFRA_CONVENTIONS.infra.jobManagement.jobId]: jobId,
+      [INFRA_CONVENTIONS.infra.jobManagement.taskId]: taskId,
     });
     for (const task of seedTasks) {
       const logObj = { mode: task.mode, layerId: task.layerId, jobId, taskId };
       // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
       if (task.mode === SeedMode.SEED || task.mode === SeedMode.CLEAN) {
-        spanActive?.setAttribute('mapcolonies.raster.seedMode', task.mode);
+        spanActive?.setAttribute(RASTER_CONVENTIONS.raster.cacheSeeder.seedMode, task.mode);
         spanActive?.addEvent('seedTask', logObj);
         await this.mapproxySeed.runSeed(task, jobId, taskId);
       } else {
@@ -114,12 +113,10 @@ export class CacheSeedManager {
     let spanLinks;
     const spanOptions: SpanOptions = {
       attributes: {
-        /* eslint-disable @typescript-eslint/naming-convention */
-        'mapcolonies.raster.jobId': tilesTask.jobId,
-        'mapcolonies.raster.taskId': tilesTask.id,
-        'mapcolonies.raster.catalogId': tilesTask.parameters.seedTasks[0].layerId,
-        'mapcolonies.raster.layerId': tilesTask.parameters.catalogId,
-        /* eslint-enable @typescript-eslint/naming-convention */
+        [INFRA_CONVENTIONS.infra.jobManagement.jobId]: tilesTask.jobId,
+        [INFRA_CONVENTIONS.infra.jobManagement.taskId]: tilesTask.id,
+        [RASTER_CONVENTIONS.raster.mapproxyApi.cacheName]: tilesTask.parameters.seedTasks[0].layerId,
+        [RASTER_CONVENTIONS.raster.catalogManager.catalogId]: tilesTask.parameters.catalogId,
       },
     };
     try {

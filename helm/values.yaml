@@ -120,6 +120,7 @@ env:
     tilesTaskType: "TilesSeeding"
   seedAttempts: 5
   seedConcurrency: 5
+  mapproxyCmdCommand: "mapproxy-seed"
 
 resources:
   enabled: true

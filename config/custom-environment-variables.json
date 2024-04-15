@@ -69,5 +69,6 @@
   "gracefulReloadMaxSeconds": {
     "__name": "GRACEFUL_RELOAD_MAX_SECONDS",
     "__format": "number"
-  }
+  },
+  "mapproxy_cmd_command": "MAPPROXY_CMD_COMMAND"
 }
