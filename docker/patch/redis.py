@@ -37,8 +37,7 @@ log = logging.getLogger(__name__)
 
 
 class RedisCache(TileCacheBase):
-    def __init__(
-            self, host, port, prefix, ttl=0, db=0 ):
+    def __init__(self, host, port, prefix, ttl=0, db=0 ):
         if redis is None:
             raise ImportError("Redis backend requires 'redis' package.")
         
