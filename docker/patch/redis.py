@@ -38,14 +38,10 @@ log = logging.getLogger(__name__)
 
 class RedisCache(TileCacheBase):
     def __init__(
-            self, host, port, prefix, ttl=0, db=0 ,ssl_certfile=None,
-            ssl_keyfile=None, ssl_ca_certs=None):
+            self, host, port, prefix, ttl=0, db=0 ):
         if redis is None:
             raise ImportError("Redis backend requires 'redis' package.")
         
-        self.ssl_certfile = ssl_certfile
-        self.ssl_keyfile = ssl_keyfile
-        self.ssl_ca_certs = ssl_ca_certs
         # temporary patch - should be auto support on mapproxy 2.0
         user = os.environ.get('REDIS_USERNAME')
         password = os.environ.get('REDIS_PASSWORD')
@@ -54,10 +50,7 @@ class RedisCache(TileCacheBase):
         self.ttl = ttl
 
         ssl_enabled = get_redis_variable("REDIS_TLS")
-        log.info("ssl enabled value is", ssl_enabled)
-        ssl_certfile = self.ssl_certfile if ssl_enabled else None
-        ssl_keyfile = self.ssl_keyfile if ssl_enabled else None
-        ssl_ca_certs = self.ssl_ca_certs if ssl_enabled else None
+        cert_reqs =  os.environ.get("SSL_CERTS_REQS", None)
 
         self.r = redis.StrictRedis(
             host=host, 
@@ -65,10 +58,8 @@ class RedisCache(TileCacheBase):
             db=db, 
             username=user, 
             password=password, 
-            ssl_certfile=ssl_certfile,
-            ssl_keyfile=ssl_keyfile,
-            ssl_ca_certs=ssl_ca_certs,
-            ssl=ssl_enabled      
+            ssl=ssl_enabled,
+            ssl_cert_reqs=cert_reqs       
         )
 
     def _key(self, tile):
