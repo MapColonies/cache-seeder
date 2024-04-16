@@ -142,6 +142,16 @@ class RedisCache(TileCacheBase):
         return True
 
 def get_redis_variable(name):
+    '''
+    Convert environ variables (strings) representing boolean and return actual boolean value
+
+        Parameters:
+            name (bool): Boolean value - for example "true" | "TRUE" | "T" | "False" | None
+
+        Returns:
+            boolean (bool): boolean value in python (False | True)
+
+    '''
     env_var = os.environ.get(name, "false")
     if env_var.lower().strip() in ("true"):
         return True
