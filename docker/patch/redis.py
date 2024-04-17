@@ -49,6 +49,8 @@ class RedisCache(TileCacheBase):
         self.ttl = ttl
 
         ssl_enabled = get_redis_variable("REDIS_TLS")
+
+        # didnt add this variable in the values and config map file to let it be None on purpose for now
         cert_reqs =  os.environ.get("SSL_CERTS_REQS", None)
 
         self.r = redis.StrictRedis(
