@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.1.0](https://github.com/MapColonies/cache-seeder/compare/v1.0.6...v1.1.0) (2024-04-17)
+
+
+### Features
+
+* add redis tls support ( MAPCO-4162) ([#14](https://github.com/MapColonies/cache-seeder/issues/14)) ([35bfca9](https://github.com/MapColonies/cache-seeder/commit/35bfca903e9ede2e8bd2aa93ba4731e474b723d9))
+
 ### [1.0.6](https://github.com/MapColonies/cache-seeder/compare/v1.0.5...v1.0.6) (2024-03-19)
 
 
