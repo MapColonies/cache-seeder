@@ -20,7 +20,7 @@ RUN pip3 install MapProxy==1.16.0
 RUN pip3 install -r docker/requirements.txt
 RUN pip3 install requests==2.27.1
 RUN pip3 install install uplink
-# on future mapproxy >2 will contain the redis.py fixed patch
+# on future mapproxy >2 will contain the redis.py, loader.py, spec.py fixed patch
 RUN cp ./docker/patch/redis.py /opt/venv/lib/python3.11/site-packages/mapproxy/cache/redis.py
 
 FROM node:20 as mid

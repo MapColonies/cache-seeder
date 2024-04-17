@@ -37,7 +37,7 @@ log = logging.getLogger(__name__)
 
 
 class RedisCache(TileCacheBase):
-    def __init__(self, host, port, prefix, ttl=0, db=0):
+    def __init__(self, host, port, prefix, ttl=0, db=0 ):
         if redis is None:
             raise ImportError("Redis backend requires 'redis' package.")
         
@@ -47,7 +47,21 @@ class RedisCache(TileCacheBase):
         self.prefix = prefix
         self.lock_cache_id = 'redis-' + hashlib.md5((host + str(port) + prefix + str(db)).encode('utf-8')).hexdigest()
         self.ttl = ttl
-        self.r = redis.StrictRedis(host=host, port=port, db=db, password=password, username=user)
+
+        ssl_enabled = get_redis_variable("REDIS_TLS")
+
+        # didnt add this variable in the values and config map file to let it be None on purpose for now
+        cert_reqs =  os.environ.get("SSL_CERTS_REQS", None)
+
+        self.r = redis.StrictRedis(
+            host=host, 
+            port=port, 
+            db=db, 
+            username=user, 
+            password=password, 
+            ssl=ssl_enabled,
+            ssl_cert_reqs=cert_reqs       
+        )
 
     def _key(self, tile):
         x, y, z = tile.coord
@@ -128,3 +142,20 @@ class RedisCache(TileCacheBase):
         key = self._key(tile)
         self.r.delete(key)
         return True
+
+def get_redis_variable(name):
+    '''
+    Convert environ variables (strings) representing boolean and return actual boolean value
+
+        Parameters:
+            name (string): env variable name
+
+        Returns:
+            boolean (bool): boolean value in python (False | True)
+
+    '''
+    env_var = os.environ.get(name, "false")
+    if env_var.lower().strip() in ("true"):
+        return True
+    else:   
+        return False        
