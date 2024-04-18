@@ -35,7 +35,8 @@ data:
   {{ if $redis.auth.enableRedisUser }}
   REDIS_PASSWORD: {{ $redis.auth.password | quote}}
   REDIS_USERNAME: {{ $redis.auth.username | quote}}
-  GRACEFUL_RELOAD_MAX_SECONDS: {{ .Values.global.gracefulReloadMaxSeconds | quote }}
-  MAPPROXY_CMD_COMMAND: {{ .Values.env.mapproxyCmdCommand | quote }}
   {{ end }}
+  GRACEFUL_RELOAD_MAX_SECONDS: {{ .Values.global.gracefulReloadMaxSeconds | quote }}
+  GRACEFUL_BUMP_FACTOR: {{ .Values.env.gracefulBumpFactor | quote }}
+  MAPPROXY_CMD_COMMAND: {{ .Values.env.mapproxyCmdCommand | quote }}
 {{- end }}

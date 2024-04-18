@@ -144,7 +144,6 @@ export class MapproxySeed {
       const errMsg = seedLogStr.split('- ERROR -')[1];
       this.logger.error(errMsg);
       this.abortController.abort(errMsg);
-      console.log('0000');
     } else if (seedLogStr.match(/error in configuration:/g)) {
       // substr that detect some mapproxy configuration errors
       this.abortController.abort(seedLogStr);

@@ -121,6 +121,7 @@ env:
   seedAttempts: 5
   seedConcurrency: 5
   mapproxyCmdCommand: "mapproxy-seed"
+  gracefulBumpFactor: 2
 
 resources:
   enabled: true

@@ -54,5 +54,6 @@
   "seedAttempts": 5,
   "seedConcurrency": 5,
   "gracefulReloadMaxSeconds": 300,
+  "gracefulBumpFactor": 2,
   "mapproxy_cmd_command": "mapproxy-seed"
 }
