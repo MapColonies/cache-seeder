@@ -42,7 +42,7 @@ export class MapproxySeed {
     this.gracefulReloadMaxSeconds = this.config.get<number>('gracefulReloadMaxSeconds');
     this.mapproxyCmdCommand = this.config.get<string>('mapproxy_cmd_command');
     this.secondsInMin = 60;
-    this.bumpFactor = 2;
+    this.bumpFactor = this.config.get<number>('gracefulBumpFactor');
     this.abortController = new AbortController();
   }
 

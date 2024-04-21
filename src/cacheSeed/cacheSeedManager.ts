@@ -45,10 +45,10 @@ export class CacheSeedManager {
         const shouldNotWait = await this.run(tilesTask);
         span.setStatus({ code: shouldNotWait ? SpanStatusCode.OK : SpanStatusCode.ERROR });
         return shouldNotWait;
-      } catch (error) {
+      } catch (err) {
         span.setStatus({ code: SpanStatusCode.ERROR });
-        span.recordException(error as Error);
-        throw error;
+        span.recordException(err as Error);
+        throw err;
       } finally {
         span.end();
       }
@@ -166,11 +166,11 @@ export class CacheSeedManager {
         status: OperationStatus.COMPLETED,
         percentage: 100,
       });
-    } catch (error) {
-      const errorObj = { jobId, taskId, msg: 'Reject task and increase attempts', error };
+    } catch (err) {
+      const errorObj = { jobId, taskId, msg: 'Reject task and increase attempts', err };
       this.logger.error(errorObj);
-      await this.queueClient.queueHandlerForTileSeedingTasks.reject(jobId, taskId, true, (error as Error).message);
-      trace.getActiveSpan()?.recordException(error as Error);
+      await this.queueClient.queueHandlerForTileSeedingTasks.reject(jobId, taskId, true, (err as Error).message);
+      trace.getActiveSpan()?.recordException(err as Error);
       return false;
     }
 

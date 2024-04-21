@@ -36,8 +36,8 @@ const mainLoop = async (): Promise<void> => {
       if (!taskProcessed) {
         await setTimeoutPromise(dequeueIntervalMs);
       }
-    } catch (error) {
-      logger.fatal(`mainLoop: Error: ${JSON.stringify(error, Object.getOwnPropertyNames(error))}`);
+    } catch (err) {
+      logger.fatal(`mainLoop: Error: ${JSON.stringify(err, Object.getOwnPropertyNames(err))}`);
       await setTimeoutPromise(dequeueIntervalMs);
     }
   }
