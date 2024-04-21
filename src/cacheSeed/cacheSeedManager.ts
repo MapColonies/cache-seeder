@@ -110,7 +110,6 @@ export class CacheSeedManager {
    * @returns SpanOption object with attributes and optional links array
    */
   private getInitialSpanOption(tilesTask: ITaskResponse<ITaskParams>): SpanOptions {
-    let spanLinks;
     const spanOptions: SpanOptions = {
       attributes: {
         [INFRA_CONVENTIONS.infra.jobManagement.jobId]: tilesTask.jobId,
@@ -121,13 +120,13 @@ export class CacheSeedManager {
     };
     try {
       if (tilesTask.parameters.traceParentContext) {
-        spanLinks = getSpanLinkOption(tilesTask.parameters.traceParentContext); // add link to trigging parent trace (overseer)
+        const spanLinks = getSpanLinkOption(tilesTask.parameters.traceParentContext); // add link to trigging parent trace (overseer)
         spanOptions.links = spanLinks;
       }
     } catch (err) {
       const logWarnMsg = `No trace parent link data exists`;
-      const logObj = { jobId: tilesTask.jobId, taskId: tilesTask.id, layerId: tilesTask.parameters.catalogId, err: (err as Error).message };
-      this.logger.warn(logObj, logWarnMsg);
+      const logObj = { jobId: tilesTask.jobId, taskId: tilesTask.id, layerId: tilesTask.parameters.catalogId, err };
+      this.logger.warn({ ...logObj, msg: logWarnMsg });
     }
     return spanOptions;
   }
@@ -145,7 +144,7 @@ export class CacheSeedManager {
     const logInfoMsg = `Found new seed job: ${jobId}`;
     const logObj = { jobId, taskId, productId: job.resourceId, productVersion: job.version, productType: job.productType };
 
-    this.logger.info(logObj, logInfoMsg);
+    this.logger.info({ ...logObj, msg: logInfoMsg });
     trace.getActiveSpan()?.addEvent(logInfoMsg, logObj);
 
     if (attempts > this.seedAttempts) {
@@ -168,6 +167,8 @@ export class CacheSeedManager {
         percentage: 100,
       });
     } catch (error) {
+      const errorObj = { jobId, taskId, msg: 'Reject task and increase attempts', error };
+      this.logger.error(errorObj);
       await this.queueClient.queueHandlerForTileSeedingTasks.reject(jobId, taskId, true, (error as Error).message);
       trace.getActiveSpan()?.recordException(error as Error);
       return false;

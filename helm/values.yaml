@@ -95,6 +95,10 @@ caKey: 'ca.crt'
 tracing:
   enabled: false
   url: ''
+
+metrics:
+    enabled: false
+    url: http://localhost:55681/v1/metrics
   
 image:
   repository: cache-seeder
@@ -109,9 +113,7 @@ env:
   logPrettyPrintEnabled: false
   responseCompressionEnabled: true
   requestPayloadLimit: 1mb
-  metrics:
-    enabled: false
-    url: http://localhost:55681/v1/metrics
+  
   queue:
     heartbeat:
       heartbeatIntervalMs: 3000

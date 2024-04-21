@@ -1,5 +1,5 @@
 {{- $tracing := (include "common.tracing.merged" .) | fromYaml }}
-{{- $metricsUrl := include "cache-seeder.metricsUrl" . -}}
+{{- $metrics := (include "common.metrics.merged" .) | fromYaml }}
 {{- $configmapName := include "configmap.fullname" . }}
 {{- $redis := (include "common.redis.merged" .) | fromYaml }}
 {{- $serviceUrls := (include "common.serviceUrls.merged" .) | fromYaml }}
@@ -18,9 +18,9 @@ data:
   {{ if $tracing.enabled }}
   TELEMETRY_TRACING_URL: {{ $tracing.url }}
   {{ end }}
-  {{ if .Values.env.metrics.enabled }}
+  {{ if $metrics.enabled }}
   TELEMETRY_METRICS_ENABLED: 'true'
-  TELEMETRY_METRICS_URL: {{ $metricsUrl }}
+  TELEMETRY_METRICS_URL: {{ $metrics.url }}
   {{ end }}
   npm_config_cache: /tmp/
   QUEUE_JOB_MANAGER_BASE_URL: {{ $serviceUrls.jobManager | quote}}

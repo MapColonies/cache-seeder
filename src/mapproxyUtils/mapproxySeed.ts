@@ -61,7 +61,7 @@ export class MapproxySeed {
       refreshBefore: task.refreshBefore,
     };
     const logMsg = `processing ${task.mode} for job of ${task.layerId}`;
-    this.logger.info(logObject, logMsg);
+    this.logger.info({ ...logObject, msg: logMsg });
     const spanActive = trace.getActiveSpan();
     spanActive?.setAttributes({
       [INFRA_CONVENTIONS.infra.jobManagement.jobId]: jobId,
@@ -167,7 +167,7 @@ export class MapproxySeed {
     try {
       const logInfoMsg = `Generating geoJson coverage file: ${path}`;
       const logInfoObj = { path, jobId, taskId };
-      this.logger.info(logInfoObj, logInfoMsg);
+      this.logger.info({ ...logInfoObj, msg: logInfoMsg });
       spanActive?.addEvent(logInfoMsg, logInfoObj);
       await fsp.writeFile(path, data, 'utf8');
     } catch (err) {
@@ -188,7 +188,7 @@ export class MapproxySeed {
       toZoomLevel: seedOptions.toZoomLevel,
     };
     const logInfoMsg = `Generating seed.yaml file to ${seedOptions.mode} task`;
-    this.logger.info(logObj, logInfoMsg);
+    this.logger.info({ ...logObj, msg: logInfoMsg });
     const spanActive = trace.getActiveSpan();
     spanActive?.setAttributes({
       [INFRA_CONVENTIONS.infra.jobManagement.jobId]: jobId,
@@ -338,8 +338,8 @@ export class MapproxySeed {
     try {
       const logInfoMsg = `Generating current mapproxy config yaml to: ${this.mapproxyYamlDir}`;
       const logObj = { jobId, taskId, mapproxyYamlDir: this.mapproxyYamlDir };
-      this.logger.info(logObj, logInfoMsg);
-      this.logger.debug({ ...logObj, mapproxyYaml: currentMapproxyConfig }, `current mapproxy yaml config`);
+      this.logger.info({ ...logObj, msg: logInfoMsg });
+      this.logger.debug({ ...logObj, mapproxyYaml: currentMapproxyConfig, msg: `current mapproxy yaml config` });
       spanActive?.addEvent('generate mapproxy yaml', logObj);
       await fsp.writeFile(this.mapproxyYamlDir, currentMapproxyConfig, 'utf8');
     } catch (err) {
@@ -379,7 +379,7 @@ export class MapproxySeed {
       }
       // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
       const cmdStr = `${this.mapproxyCmdCommand} ${flags.join(' ')}`;
-      this.logger.info({ msg: 'Execute cli command for seed', command: cmdStr });
+      this.logger.info({ msg: 'Execute cli command for seed', command: cmdStr, jobId, taskId });
       spanActive?.addEvent(cmdStr);
 
       await runCommand(this.mapproxyCmdCommand, flags, { onProgress: this.seedProgressFunc.bind(this), abortSignal: this.abortController.signal });

@@ -30,17 +30,13 @@ export class MapproxyConfigClient extends HttpClient {
   @withSpanAsyncV4
   public async getConfig(format: SchemaType = SchemaType.YAML): Promise<IMapProxyConfig | Promise<string>> {
     const spanActive = trace.getActiveSpan();
-    spanActive?.setAttributes({
-      /* eslint-disable @typescript-eslint/naming-convention */
-      'mapcolonies.raster.mapproxyApiUrl': this.getConfigUrl,
-      /* eslint-enable @typescript-eslint/naming-convention */
-    });
     // eslint-disable-next-line @typescript-eslint/naming-convention
     const headers = { Accept: format };
     try {
+      const mapproxyApiUrl = join([this.config.get<string>('mapproxy.mapproxyApiUrl'), this.getConfigUrl], '');
       const logInfoMsg = `Getting mapproxy.yaml configuration from provider request`;
-      const logInfoObj = { mapproxyApiUrl: join([this.config.get<string>('mapproxy.mapproxyApiUrl'), this.getConfigUrl], '') };
-      this.logger.info(logInfoObj, logInfoMsg);
+      const logInfoObj = { mapproxyApiUrl };
+      this.logger.info({ ...logInfoObj, msg: logInfoMsg });
       spanActive?.addEvent(logInfoMsg, logInfoObj);
 
       const mapproxyConfig: IMapProxyConfig | string = await this.get(this.getConfigUrl, undefined, undefined, undefined, headers);
