@@ -2,10 +2,6 @@
 import { IJobResponse, ITaskResponse, OperationStatus } from '@map-colonies/mc-priority-queue';
 import { ITaskParams } from '../../src/common/interfaces';
 import { CacheType, SeedMode } from '../../src/common/enums';
-import { Readable, Writable } from 'stream';
-import { ProcessOutput, ProcessPromise } from 'zx';
-import { ChildProcess } from 'node:child_process';
-import * as zx from 'zx';
 
 const task = {
   id: '9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d',
@@ -64,7 +60,9 @@ const task = {
       },
     ],
     catalogId: 'bf60bc17-aa2e-49df-9478-98b783b47b68',
-    spanId: '123456',
+    traceParentContext: {
+      traceparent: "00-cf79cb9964bce24d461321db4fdce4da-8eedc8e68d60730c-01"
+    },
     cacheType: CacheType.REDIS,
   },
   resettable: false,
@@ -107,27 +105,5 @@ const job: IJobResponse<unknown, unknown> = {
 function getJob(): IJobResponse<unknown, unknown> {
   return job;
 }
-const readableBad = Readable.from(['some dummy log - ERROR - some test error on seeding']);
-const readable = Readable.from(['some test data', 'some test data2']);
-const readableOnStub = jest.spyOn(readable, 'on');
-const cmdProcessPromise: ProcessPromise<ProcessOutput> = {
-  stdout: readable,
-  child: new ChildProcess(),
-  stdin: new Writable(),
-  stderr: new Readable(),
-  exitCode: Promise.resolve(0),
-  pipe: function (dest: zx.ProcessPromise<zx.ProcessOutput> | Writable): zx.ProcessPromise<zx.ProcessOutput> {
-    throw new Error('Function not implemented.');
-  },
-  kill: function (signal?: string | number | undefined): Promise<void> {
-    throw new Error('Function not implemented.');
-  },
-  then: jest.fn().mockResolvedValue({exitCode:0,stderr:'',stdout:"success"}),
-  catch: jest.fn().mockResolvedValue(new Error('error')),
-  finally: function (onfinally?: (() => void) | null | undefined): Promise<zx.ProcessOutput> {
-    throw new Error('Function not implemented.');
-  },
-  [Symbol.toStringTag]: '',
-};
 
-export { getTask, getJob, cmdProcessPromise, readableOnStub };
+export { getTask, getJob };

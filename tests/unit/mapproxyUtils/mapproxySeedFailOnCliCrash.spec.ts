@@ -9,12 +9,10 @@ import { getContainerConfig, resetContainer } from '../testContainerConfig';
 import { MapproxySeed } from '../../../src/mapproxyUtils/mapproxySeed';
 import { IQueueConfig } from '../../../src/common/interfaces';
 import { MapproxyConfigClient } from '../../../src/clients/mapproxyConfig';
-import { $ } from 'zx';
+import { tracerMock } from '../../mocks/tracer';
 
 let mapproxyConfigClient: MapproxyConfigClient;
 let mapproxySeed: MapproxySeed;
-
-$.prefix = 'bad_cli_command_internal_';
 
 describe('#MapproxySeed', () => {
   const jobManagerTestUrl = 'http://someJobManager';
@@ -24,18 +22,19 @@ describe('#MapproxySeed', () => {
 
   beforeEach(function () {
     initConfig();
+    setValue('mapproxy_cmd_command', 'badCommand');
     setValue('mapproxy.mapproxyApiUrl', mapproxyTestUrl);
     setValue('seedAttempts', 4);
     setValue('queue', { ...configMock.get<IQueueConfig>('queue'), jobManagerBaseUrl: jobManagerTestUrl });
     setValue('server.httpRetry', { ...configMock.get<IHttpRetryConfig>('server.httpRetry'), delay: 0 });
-    mapproxyConfigClient = new MapproxyConfigClient(configMock, jsLogger({ enabled: false }));
+    mapproxyConfigClient = new MapproxyConfigClient(configMock, jsLogger({ enabled: false }), tracerMock);
 
     console.warn = jest.fn();
     getApp({
       override: [...getContainerConfig()],
       useChild: false,
     });
-    mapproxySeed = new MapproxySeed(jsLogger({ enabled: false }), configMock, mapproxyConfigClient);
+    mapproxySeed = new MapproxySeed(jsLogger({ enabled: false }), configMock, tracerMock, mapproxyConfigClient);
   });
 
   afterEach(function () {
@@ -67,7 +66,7 @@ describe('#MapproxySeed', () => {
       const action = async () => {
         await mapproxySeed.runSeed(task.parameters.seedTasks[0], task.jobId, task.id);
       };
-      await expect(action).rejects.toThrow(/bad_cli_command_internal_mapproxy-seed/);
+      await expect(action).rejects.toThrow(/Shell error: spawn badCommand ENOENT/);
 
       expect(writeMapproxyYamlSpy).toHaveBeenCalledTimes(1);
       expect(writeFileStub).toHaveBeenCalledTimes(3);

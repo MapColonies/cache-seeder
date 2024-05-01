@@ -93,6 +93,14 @@ caSecretName: ''
 caPath: '/usr/local/share/ca-certificates'
 caKey: 'ca.crt'
 
+tracing:
+  enabled: false
+  url: ''
+
+metrics:
+  enabled: false
+  url: ''
+  
 image:
   repository: cache-seeder
   tag: 'latest'
@@ -106,12 +114,7 @@ env:
   logPrettyPrintEnabled: false
   responseCompressionEnabled: true
   requestPayloadLimit: 1mb
-  tracing:
-    enabled: false
-    url: http://localhost:55681/v1/trace
-  metrics:
-    enabled: false
-    url: http://localhost:55681/v1/metrics
+  
   queue:
     heartbeat:
       heartbeatIntervalMs: 3000
@@ -120,6 +123,8 @@ env:
     tilesTaskType: "TilesSeeding"
   seedAttempts: 5
   seedConcurrency: 5
+  mapproxyCmdCommand: "mapproxy-seed"
+  gracefulBumpFactor: 2
 
 resources:
   enabled: true

@@ -1,19 +1,20 @@
 import { promises as fsp } from 'node:fs';
-import { $, ProcessOutput } from 'zx';
 import { dump } from 'js-yaml';
 import { Logger } from '@map-colonies/js-logger';
 import { inject, singleton } from 'tsyringe';
+import { Tracer, trace } from '@opentelemetry/api';
+import { withSpanAsyncV4 } from '@map-colonies/telemetry';
+import { RASTER_CONVENTIONS, INFRA_CONVENTIONS } from '@map-colonies/telemetry/conventions';
 import { SERVICES } from '../common/constants';
 import { IConfig, ISeed } from '../common/interfaces';
 import { MapproxyConfigClient } from '../clients/mapproxyConfig';
-/* eslint-disable @typescript-eslint/naming-convention */
 import { BaseCache, Cleanup, Seed, seedsSchema, cleanupsSchema, baseSchema } from '../common/schemas/seeds';
 import { Coverage, coveragesSchema } from '../common/schemas/coverages';
 import { SeedMode } from '../common/enums';
 import { fileExists, isGridExists, isRedisCache, isValidDateFormat, zoomComparison } from '../common/validations';
+import { runCommand } from '../common/cmd';
 
-$.verbose = false;
-
+let isErroredCmd = false;
 @singleton()
 export class MapproxySeed {
   private readonly mapproxyYamlDir: string;
@@ -24,10 +25,13 @@ export class MapproxySeed {
   private readonly gracefulReloadMaxSeconds: number;
   private readonly secondsInMin: number;
   private readonly bumpFactor: number;
+  private readonly abortController: AbortController;
+  private readonly mapproxyCmdCommand: string;
 
   public constructor(
     @inject(SERVICES.LOGGER) private readonly logger: Logger,
     @inject(SERVICES.CONFIG) private readonly config: IConfig,
+    @inject(SERVICES.TRACER) public readonly tracer: Tracer,
     private readonly mapproxyConfigClient: MapproxyConfigClient
   ) {
     this.mapproxyYamlDir = this.config.get<string>('mapproxy.mapproxyYamlDir');
@@ -36,15 +40,17 @@ export class MapproxySeed {
     this.seedConcurrency = this.config.get<number>('seedConcurrency');
     this.mapproxySeedProgressDir = this.config.get<string>('mapproxy.seedProgressFileDir');
     this.gracefulReloadMaxSeconds = this.config.get<number>('gracefulReloadMaxSeconds');
+    this.mapproxyCmdCommand = this.config.get<string>('mapproxy_cmd_command');
     this.secondsInMin = 60;
-    this.bumpFactor = 2;
+    this.bumpFactor = this.config.get<number>('gracefulBumpFactor');
+    this.abortController = new AbortController();
   }
 
+  @withSpanAsyncV4
   public async runSeed(task: ISeed, jobId: string, taskId: string): Promise<void> {
     task.refreshBefore = this.addTimeMinuteBuffer(task.refreshBefore);
 
-    this.logger.info({
-      msg: `processing ${task.mode} for job of ${task.layerId}`,
+    const logObject = {
       jobId,
       taskId,
       layerId: task.layerId,
@@ -53,7 +59,20 @@ export class MapproxySeed {
       fromZoom: task.fromZoomLevel,
       toZoom: task.toZoomLevel,
       refreshBefore: task.refreshBefore,
+    };
+    const logMsg = `processing ${task.mode} for job of ${task.layerId}`;
+    this.logger.info({ ...logObject, msg: logMsg });
+    const spanActive = trace.getActiveSpan();
+    spanActive?.setAttributes({
+      [INFRA_CONVENTIONS.infra.jobManagement.jobId]: jobId,
+      [INFRA_CONVENTIONS.infra.jobManagement.taskId]: taskId,
+      [RASTER_CONVENTIONS.raster.cacheSeeder.seedMode]: task.mode,
+      [RASTER_CONVENTIONS.raster.catalogManager.catalogId]: task.layerId,
+      [RASTER_CONVENTIONS.raster.cacheSeeder.grids]: task.grid,
+      [RASTER_CONVENTIONS.raster.cacheSeeder.refreshBefore]: task.refreshBefore,
     });
+
+    spanActive?.addEvent(logMsg, logObject);
 
     try {
       // Pre data validation
@@ -106,9 +125,50 @@ export class MapproxySeed {
     return validSeedDateFormatted;
   }
 
+  //TODO - should be integrated to update job status-progress mechanism
+  //     - calculate dynamically the actual percentage
+  //     - send update percentage to total percentage on job-task tables
+
+  /**
+   * Not implemented - should calculate task progress dynamically and update job-manager progress percentage
+   * @param {string} seedLogStr current batch stdout
+   * @returns {void}
+   */
+
+  public seedProgressFunc(seedLogStr: string): void {
+    this.logger.debug(seedLogStr); // print all mapproxy-seed stdout
+    if (seedLogStr.match(/- ERROR -/g) && !isErroredCmd) {
+      // substr that detect seeding process error on mapproxy-seed util
+      // task will fail on case of seeding logic error (for example redis connection)
+      isErroredCmd = true;
+      const errMsg = seedLogStr.split('- ERROR -')[1];
+      this.logger.error(errMsg);
+      this.abortController.abort(errMsg);
+    } else if (seedLogStr.match(/error in configuration:/g)) {
+      // substr that detect some mapproxy configuration errors
+      this.abortController.abort(seedLogStr);
+      this.logger.error(seedLogStr);
+    }
+    if (seedLogStr.match(/\((\d)+ tiles\)/g)) {
+      this.logger.info(seedLogStr); // print only progress logs
+    }
+  }
+
+  // eslint-disable-next-line @typescript-eslint/member-ordering
+  @withSpanAsyncV4
   private async writeGeojsonTxtFile(path: string, data: string, jobId: string, taskId: string): Promise<void> {
+    const spanActive = trace.getActiveSpan();
+    spanActive?.setAttributes({
+      [INFRA_CONVENTIONS.infra.jobManagement.jobId]: jobId,
+      [INFRA_CONVENTIONS.infra.jobManagement.taskId]: taskId,
+      [RASTER_CONVENTIONS.raster.mapproxyApi.mapproxyYamlPath]: path,
+    });
+
     try {
-      this.logger.info({ msg: `Generating geoJson coverage file: ${path}`, jobId, taskId });
+      const logInfoMsg = `Generating geoJson coverage file: ${path}`;
+      const logInfoObj = { path, jobId, taskId };
+      this.logger.info({ ...logInfoObj, msg: logInfoMsg });
+      spanActive?.addEvent(logInfoMsg, logInfoObj);
       await fsp.writeFile(path, data, 'utf8');
     } catch (err) {
       this.logger.error({ msg: 'Failed on generating geometry coverage file', jobId, taskId, err });
@@ -116,14 +176,28 @@ export class MapproxySeed {
     }
   }
 
+  // eslint-disable-next-line @typescript-eslint/member-ordering
+  @withSpanAsyncV4
   private async createSeedYamlFile(seedOptions: ISeed, jobId: string, taskId: string): Promise<void> {
-    this.logger.info({
-      msg: `Generating seed.yaml file to ${seedOptions.mode} task`,
+    const logObj = {
       layerId: seedOptions.layerId,
-      mode: seedOptions.mode,
       jobId,
       taskId,
+      seedMode: seedOptions.mode,
+      fromZoomLevel: seedOptions.fromZoomLevel,
+      toZoomLevel: seedOptions.toZoomLevel,
+    };
+    const logInfoMsg = `Generating seed.yaml file to ${seedOptions.mode} task`;
+    this.logger.info({ ...logObj, msg: logInfoMsg });
+    const spanActive = trace.getActiveSpan();
+    spanActive?.setAttributes({
+      [INFRA_CONVENTIONS.infra.jobManagement.jobId]: jobId,
+      [INFRA_CONVENTIONS.infra.jobManagement.taskId]: taskId,
+      [RASTER_CONVENTIONS.raster.catalogManager.catalogId]: seedOptions.layerId,
+      [RASTER_CONVENTIONS.raster.cacheSeeder.seedMode]: seedOptions.mode,
     });
+    spanActive?.addEvent(logInfoMsg, logObj);
+
     try {
       // build the base cache object related to seed\clean job
       const coverageName = `${seedOptions.layerId}-coverage`;
@@ -178,6 +252,7 @@ export class MapproxySeed {
         jobId,
         taskId,
       });
+
       await fsp.writeFile(this.seedYamlDir, yamlSeed);
     } catch (err) {
       this.logger.error({
@@ -223,6 +298,7 @@ export class MapproxySeed {
       seeds: {
         [seedOptions.layerId]: {
           ...cache,
+          // eslint-disable-next-line @typescript-eslint/naming-convention
           refresh_before: {
             time: seedOptions.refreshBefore,
           },
@@ -239,6 +315,7 @@ export class MapproxySeed {
       cleanups: {
         [seedOptions.layerId]: {
           ...cache,
+          // eslint-disable-next-line @typescript-eslint/naming-convention
           remove_before: {
             time: seedOptions.refreshBefore,
           },
@@ -250,10 +327,20 @@ export class MapproxySeed {
     return jsonSeeds;
   }
 
+  // eslint-disable-next-line @typescript-eslint/member-ordering
+  @withSpanAsyncV4
   private async writeMapproxyYaml(jobId: string, taskId: string, currentMapproxyConfig: string): Promise<void> {
+    const spanActive = trace.getActiveSpan();
+    spanActive?.setAttributes({
+      [INFRA_CONVENTIONS.infra.jobManagement.jobId]: jobId,
+      [INFRA_CONVENTIONS.infra.jobManagement.taskId]: taskId,
+    });
     try {
-      this.logger.info({ msg: `Generating current mapproxy config yaml to: ${this.mapproxyYamlDir}`, jobId, taskId });
-      this.logger.debug({ msg: `current mapproxy yaml config`, mapproxyYaml: currentMapproxyConfig, jobId, taskId });
+      const logInfoMsg = `Generating current mapproxy config yaml to: ${this.mapproxyYamlDir}`;
+      const logObj = { jobId, taskId, mapproxyYamlDir: this.mapproxyYamlDir };
+      this.logger.info({ ...logObj, msg: logInfoMsg });
+      this.logger.debug({ ...logObj, mapproxyYaml: currentMapproxyConfig, msg: `current mapproxy yaml config` });
+      spanActive?.addEvent('generate mapproxy yaml', logObj);
       await fsp.writeFile(this.mapproxyYamlDir, currentMapproxyConfig, 'utf8');
     } catch (err) {
       this.logger.error({ msg: `Failed on generating mapproxy current yaml`, jobId, taskId, err });
@@ -261,7 +348,18 @@ export class MapproxySeed {
     }
   }
 
+  // eslint-disable-next-line @typescript-eslint/member-ordering
+  @withSpanAsyncV4
   private async executeSeed(options: ISeed, jobId: string, taskId: string): Promise<void> {
+    const spanActive = trace.getActiveSpan();
+    spanActive?.setAttributes({
+      [INFRA_CONVENTIONS.infra.jobManagement.jobId]: jobId,
+      [INFRA_CONVENTIONS.infra.jobManagement.taskId]: taskId,
+      [RASTER_CONVENTIONS.raster.cacheSeeder.seedMode]: options.mode,
+      [RASTER_CONVENTIONS.raster.catalogManager.catalogId]: options.layerId,
+      [RASTER_CONVENTIONS.raster.cacheSeeder.grids]: options.grid,
+      [RASTER_CONVENTIONS.raster.cacheSeeder.refreshBefore]: options.refreshBefore,
+    });
     try {
       const flags = [
         '-f', // mapproxy yaml directory
@@ -269,7 +367,7 @@ export class MapproxySeed {
         '-s', // seed yaml directory
         this.seedYamlDir,
         '--concurrency', // number of thread concurrency to seed task
-        this.seedConcurrency,
+        this.seedConcurrency.toString(),
         '--progress-file', // temp progress file to seed task
         `${this.mapproxySeedProgressDir}_${options.mode}`,
         '--continue', // tell seed to continue from progress file if was interrupted
@@ -279,75 +377,15 @@ export class MapproxySeed {
         this.logger.info('requested to skip uncached tiles');
         flags.push('--skip-uncached');
       }
+      // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
+      const cmdStr = `${this.mapproxyCmdCommand} ${flags.join(' ')}`;
+      this.logger.info({ msg: 'Execute cli command for seed', command: cmdStr, jobId, taskId });
+      spanActive?.addEvent(cmdStr);
 
-      /* eslint-disable @typescript-eslint/restrict-template-expressions */
-      this.logger.info({ msg: 'Execute cli command for seed', command: `mapproxy-seed ${flags}` });
-      const cmd = $`mapproxy-seed ${flags}`;
-      // promise wrap to synchronized zx internal events with node run time event
-      await new Promise<void>((resolve, reject) => {
-        cmd.stdout
-          .on('data', (chunk: Buffer) => {
-            try {
-              this.seedProgressFunc(chunk);
-            } catch (error) {
-              // this section catching seeding errors and fail the task by kill child process of cmd
-              this.logger.error({ msg: `Failed on seeding process of type ${options.mode}`, jobId, taskId, err: (error as Error).message });
-              void cmd.kill('SIGHUP');
-              cmd.child.on('exit', () => {
-                reject(new Error((error as Error).message));
-              });
-            }
-          })
-          .on('end', () => {
-            this.logger.info({ msg: `Completed ${options.mode} task`, jobId, taskId });
-            resolve();
-          });
-      });
-
-      // promise wrap zx event on case of internal crash - so the node will catch up and throw exception to main loop
-      const exitCode = await cmd.exitCode;
-      await new Promise<void>((resolve, reject) => {
-        cmd.catch((error) => {
-          this.logger.error({ msg: `Internal process error`, error: (error as ProcessOutput).stderr, jobId, taskId });
-          if ((error as ProcessOutput).exitCode !== 0) {
-            reject(new Error((error as ProcessOutput).stderr));
-          }
-        });
-        if (exitCode === 0) {
-          resolve();
-        }
-      });
+      await runCommand(this.mapproxyCmdCommand, flags, { onProgress: this.seedProgressFunc.bind(this), abortSignal: this.abortController.signal });
     } catch (err) {
       this.logger.error({ msg: `failed to generate tiles`, jobId, taskId, err });
       throw err;
-    }
-  }
-
-  //TODO - should be integrated to update job status-progress mechanism
-  //     - calculate dynamically the actual percentage
-  //     - send update percentage to total percentage on job-task tables
-
-  /**
-   * Not implemented - should calculate task progress dynamically and update job-manager progress percentage
-   * @param {Buffer} chunk - Buffer of shell stream data
-   * @returns {void}
-   */
-  private seedProgressFunc(chunk: Buffer): void {
-    const seedLogStr = chunk.toString('utf8');
-    this.logger.debug(seedLogStr); // print all mapproxy-seed stdout
-    if (seedLogStr.match(/- ERROR -/g)) {
-      // substr that detect seeding process error on mapproxy-seed util
-      // task will fail on case of seeding logic error (for example redis connection)
-      const errMsg = seedLogStr.split('- ERROR -')[1];
-      this.logger.error(errMsg);
-      throw new Error(errMsg);
-    } else if (seedLogStr.match(/error in configuration:/g)) {
-      // substr that detect some mapproxy configuration errors
-      this.logger.error(seedLogStr);
-      throw new Error(seedLogStr);
-    }
-    if (seedLogStr.match(/\((\d)+ tiles\)/g)) {
-      this.logger.info(seedLogStr); // print only progress logs
     }
   }
 }

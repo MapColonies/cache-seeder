@@ -3,6 +3,15 @@
     "logger": {
       "level": "info",
       "prettyPrint": false
+    },
+    "tracing": {
+      "enabled": false,
+      "url": "http://localhost:4318/v1/traces"
+    },
+    "metrics": {
+      "enabled": false,
+      "url": "http://localhost:4318/v1/metrics",
+      "interval": 5
     }
   },
   "server": {
@@ -44,5 +53,7 @@
   },
   "seedAttempts": 5,
   "seedConcurrency": 5,
-  "gracefulReloadMaxSeconds": 300
+  "gracefulReloadMaxSeconds": 300,
+  "gracefulBumpFactor": 2,
+  "mapproxy_cmd_command": "mapproxy-seed"
 }

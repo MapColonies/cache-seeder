@@ -1,16 +1,24 @@
 import { Logger } from '@map-colonies/js-logger';
 import { NotFoundError } from '@map-colonies/error-types';
 import { HttpClient, IHttpRetryConfig } from '@map-colonies/mc-utils';
+import { withSpanAsyncV4 } from '@map-colonies/telemetry';
 import { inject, injectable } from 'tsyringe';
+import { Tracer, trace } from '@opentelemetry/api';
+import { join } from 'lodash';
 import { IConfig, IMapProxyConfig } from '../common/interfaces';
 import { SERVICES } from '../common/constants';
 import { SchemaType } from '../common/enums';
 
 @injectable()
 export class MapproxyConfigClient extends HttpClient {
-  private readonly getConfigUr = '/config';
+  private readonly getConfigUrl = '/config';
+  private readonly mapproxyApiUrl;
 
-  public constructor(@inject(SERVICES.CONFIG) private readonly config: IConfig, @inject(SERVICES.LOGGER) protected readonly logger: Logger) {
+  public constructor(
+    @inject(SERVICES.CONFIG) private readonly config: IConfig,
+    @inject(SERVICES.LOGGER) protected readonly logger: Logger,
+    @inject(SERVICES.TRACER) public readonly tracer: Tracer
+  ) {
     super(
       logger,
       config.get<string>('mapproxy.mapproxyApiUrl'),
@@ -18,15 +26,21 @@ export class MapproxyConfigClient extends HttpClient {
       config.get<IHttpRetryConfig>('server.httpRetry'),
       config.get<boolean>('server.httpRetry.disableHttpClientLogs')
     );
+    this.mapproxyApiUrl = join([this.config.get<string>('mapproxy.mapproxyApiUrl'), this.getConfigUrl], '');
   }
 
+  @withSpanAsyncV4
   public async getConfig(format: SchemaType = SchemaType.YAML): Promise<IMapProxyConfig | Promise<string>> {
+    const spanActive = trace.getActiveSpan();
     // eslint-disable-next-line @typescript-eslint/naming-convention
     const headers = { Accept: format };
     try {
-      this.logger.info({ msg: `Getting mapproxy.yaml configuration from provider request` });
-      const mapproxyConfig: IMapProxyConfig | string = await this.get(this.getConfigUr, undefined, undefined, undefined, headers);
+      const logInfoMsg = `Getting mapproxy.yaml configuration from provider request`;
+      const logInfoObj = { mapproxyApiUrl: this.mapproxyApiUrl };
+      this.logger.info({ ...logInfoObj, msg: logInfoMsg });
+      spanActive?.addEvent(logInfoMsg, logInfoObj);
 
+      const mapproxyConfig: IMapProxyConfig | string = await this.get(this.getConfigUrl, undefined, undefined, undefined, headers);
       this.logger.debug({ msg: `Got mapproxy.yaml configuration`, config: mapproxyConfig });
       return mapproxyConfig;
     } catch (err) {
