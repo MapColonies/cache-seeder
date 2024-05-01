@@ -32,7 +32,6 @@ export const getSpanLinkOption = (context: ITraceParentContext): Link[] => {
     const invalidParts = `${parts.join('|')}`;
     throw Error(`TraceParentContext include not valid traceparent object: ${invalidParts}`);
   }
-  console.log(parts, '**********');
   const spanLinks: Link[] = [{ context: { spanId: parts[2], traceFlags: parseInt(parts[3]), traceId: parts[1] } }];
   return spanLinks;
 };

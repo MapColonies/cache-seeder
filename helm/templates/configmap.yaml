@@ -19,7 +19,7 @@ data:
   TELEMETRY_TRACING_URL: {{ $tracing.url }}
   {{ end }}
   {{ if $metrics.enabled }}
-  TELEMETRY_METRICS_ENABLED: 'true'
+  TELEMETRY_METRICS_ENABLED: {{ $metrics.enabled | quote }}
   TELEMETRY_METRICS_URL: {{ $metrics.url }}
   {{ end }}
   npm_config_cache: /tmp/

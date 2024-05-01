@@ -12,6 +12,7 @@ import { SchemaType } from '../common/enums';
 @injectable()
 export class MapproxyConfigClient extends HttpClient {
   private readonly getConfigUrl = '/config';
+  private readonly mapproxyApiUrl;
 
   public constructor(
     @inject(SERVICES.CONFIG) private readonly config: IConfig,
@@ -25,6 +26,7 @@ export class MapproxyConfigClient extends HttpClient {
       config.get<IHttpRetryConfig>('server.httpRetry'),
       config.get<boolean>('server.httpRetry.disableHttpClientLogs')
     );
+    this.mapproxyApiUrl = join([this.config.get<string>('mapproxy.mapproxyApiUrl'), this.getConfigUrl], '');
   }
 
   @withSpanAsyncV4
@@ -33,9 +35,8 @@ export class MapproxyConfigClient extends HttpClient {
     // eslint-disable-next-line @typescript-eslint/naming-convention
     const headers = { Accept: format };
     try {
-      const mapproxyApiUrl = join([this.config.get<string>('mapproxy.mapproxyApiUrl'), this.getConfigUrl], '');
       const logInfoMsg = `Getting mapproxy.yaml configuration from provider request`;
-      const logInfoObj = { mapproxyApiUrl };
+      const logInfoObj = { mapproxyApiUrl: this.mapproxyApiUrl };
       this.logger.info({ ...logInfoObj, msg: logInfoMsg });
       spanActive?.addEvent(logInfoMsg, logInfoObj);
 
