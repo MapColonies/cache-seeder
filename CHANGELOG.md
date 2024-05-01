@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.2.0](https://github.com/MapColonies/cache-seeder/compare/v1.1.0...v1.2.0) (2024-05-01)
+
+
+### Features
+
+* adding tracing mechanism + replace zx mechanism (MAPCO-3940) ([#13](https://github.com/MapColonies/cache-seeder/issues/13)) ([c87f767](https://github.com/MapColonies/cache-seeder/commit/c87f767446e23906aa1a9557955a2dfc182c1e31))
+
 ## [1.1.0](https://github.com/MapColonies/cache-seeder/compare/v1.0.6...v1.1.0) (2024-04-17)
 
 
