@@ -17,6 +17,10 @@ global:
     jobManager: ""
     heartbeatManager: ""
   redis: {}
+  ca:    
+    caSecretName: ''
+    caPath: '/usr/local/share/ca-certificates'
+    caKey: 'ca.crt'
   gracefulReloadMaxSeconds: 300
 
 storage: # local service level
@@ -88,10 +92,6 @@ serviceUrls:
   mapproxyApi: ""
   jobManager: ""
   heartbeatManager: ""
-
-caSecretName: ''
-caPath: '/usr/local/share/ca-certificates'
-caKey: 'ca.crt'
 
 tracing:
   enabled: false
