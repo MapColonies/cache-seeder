@@ -110,10 +110,10 @@ image:
 jobDefinitions:
   jobs:
     seed:
-      type: "TilesSeeding"
+      type: ''
   tasks:
     seed:
-      type: "TilesSeeding"
+      type: ''
 
 env:
   port: 8080
