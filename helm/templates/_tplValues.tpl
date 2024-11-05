@@ -72,3 +72,7 @@ Custom definitions
 {{- define "common.serviceUrls.merged" -}}
 {{- include "common.tplvalues.merge" ( dict "values" ( list .Values.serviceUrls .Values.global.serviceUrls ) "context" . ) }}
 {{- end -}}
+
+{{- define "common.jobDefinitions.merged" -}}
+{{- include "common.tplvalues.merge" ( dict "values" ( list .Values.jobDefinitions .Values.global.jobDefinitions ) "context" . ) }}
+{{- end -}}

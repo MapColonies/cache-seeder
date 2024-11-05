@@ -3,6 +3,7 @@
 {{- $configmapName := include "configmap.fullname" . }}
 {{- $redis := (include "common.redis.merged" .) | fromYaml }}
 {{- $serviceUrls := (include "common.serviceUrls.merged" .) | fromYaml }}
+{{- $jobDefinitions := (include "common.jobDefinitions.merged" .) | fromYaml }}
 
 {{- if .Values.enabled -}}
 apiVersion: v1
@@ -27,8 +28,8 @@ data:
   QUEUE_HEART_BEAT_MANAGER_BASE_URL: {{ $serviceUrls.heartbeatManager | quote}}
   QUEUE_HEART_BEAT_INTERVAL_MS: {{ .Values.env.queue.heartbeat.heartbeatIntervalMs | quote}}
   QUEUE_DEQUEUE_INTERVAL_MS: {{ .Values.env.queue.dequeueIntervalMs | quote}}
-  QUEUE_JOB_TYPE: {{ .Values.env.queue.jobType | quote}}
-  QUEUE_TASK_TYPE: {{ .Values.env.queue.tilesTaskType | quote}}
+  QUEUE_JOB_TYPE: {{ $jobDefinitions.jobs.seed.type | quote}}
+  QUEUE_TASK_TYPE: {{ $jobDefinitions.tasks.seed.type | quote}}
   MAPPROXY_API_URL: {{ $serviceUrls.mapproxyApi | quote}}
   SEED_ATTEMPTS: {{ .Values.env.seedAttempts | quote}}
   SEED_CONCURRENCY: {{ .Values.env.seedConcurrency | quote}}

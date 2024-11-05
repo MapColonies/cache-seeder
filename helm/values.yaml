@@ -3,6 +3,7 @@ global:
   tracing: {}
   metrics: {}
   environment: ''
+  jobDefinitions: {}
   storage:
     tilesStorageProvider: ""
     s3:
@@ -106,6 +107,14 @@ image:
   tag: 'latest'
   pullPolicy: Always
 
+jobDefinitions:
+  jobs:
+    seed:
+      type: ''
+  tasks:
+    seed:
+      type: ''
+
 env:
   port: 8080
   targetPort: 8080
@@ -119,8 +128,6 @@ env:
     heartbeat:
       heartbeatIntervalMs: 3000
     dequeueIntervalMs: 2000
-    jobType: "TilesSeeding"
-    tilesTaskType: "TilesSeeding"
   seedAttempts: 5
   seedConcurrency: 5
   mapproxyCmdCommand: "mapproxy-seed"
