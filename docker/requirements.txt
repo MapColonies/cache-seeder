@@ -7,3 +7,4 @@ googleapis-common-protos==1.53.0
 protobuf==3.20.3
 shapely==2.0.2
 pyproj==3.6.1
+numpy==1.26.4
