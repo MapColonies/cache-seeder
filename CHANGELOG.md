@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.2.4](https://github.com/MapColonies/cache-seeder/compare/v1.2.3...v1.2.4) (2024-11-27)
+
+
+### Bug Fixes
+
+* add numpy ([#19](https://github.com/MapColonies/cache-seeder/issues/19)) ([07eba98](https://github.com/MapColonies/cache-seeder/commit/07eba981714a414642e59d311b8ee43b1aaabe5a))
+
 ### [1.2.3](https://github.com/MapColonies/cache-seeder/compare/v1.2.2...v1.2.3) (2024-11-05)
 
 ### [1.2.2](https://github.com/MapColonies/cache-seeder/compare/v1.2.1...v1.2.2) (2024-05-06)
