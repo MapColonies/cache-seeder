@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.2.5](https://github.com/MapColonies/cache-seeder/compare/v1.2.4...v1.2.5) (2025-02-24)
+
+
+### Bug Fixes
+
+* removing max_old_space_size from Dockerfile ([#21](https://github.com/MapColonies/cache-seeder/issues/21)) ([6dba754](https://github.com/MapColonies/cache-seeder/commit/6dba7545c2f9536a2a3a0cb47d6ff82b95df8b3f))
+
 ### [1.2.4](https://github.com/MapColonies/cache-seeder/compare/v1.2.3...v1.2.4) (2024-11-27)
 
 
