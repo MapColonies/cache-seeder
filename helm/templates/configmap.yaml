@@ -31,6 +31,7 @@ data:
   QUEUE_JOB_TYPE: {{ $jobDefinitions.jobs.seed.type | quote}}
   QUEUE_TASK_TYPE: {{ $jobDefinitions.tasks.seed.type | quote}}
   MAPPROXY_API_URL: {{ $serviceUrls.mapproxyApi | quote}}
+  JOB_TRACKER_URL: {{ $serviceUrls.jobTracker | quote}}
   SEED_ATTEMPTS: {{ .Values.env.seedAttempts | quote}}
   SEED_CONCURRENCY: {{ .Values.env.seedConcurrency | quote}}
   {{ if $redis.auth.enableRedisUser }}

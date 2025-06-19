@@ -1,7 +1,7 @@
 import { setTimeout as setTimeoutPromise } from 'timers/promises';
 import { Logger } from '@map-colonies/js-logger';
 import { inject, singleton } from 'tsyringe';
-import { OperationStatus, ITaskResponse } from '@map-colonies/mc-priority-queue';
+import { ITaskResponse } from '@map-colonies/mc-priority-queue';
 import { withSpanAsyncV4 } from '@map-colonies/telemetry';
 import { INFRA_CONVENTIONS, RASTER_CONVENTIONS } from '@map-colonies/telemetry/conventions';
 import { SpanOptions, SpanStatusCode, Tracer, trace } from '@opentelemetry/api';
@@ -11,6 +11,7 @@ import { MapproxySeed } from '../mapproxyUtils/mapproxySeed';
 import { QueueClient } from '../clients/queueClient';
 import { CacheType, SeedMode } from '../common/enums';
 import { getSpanLinkOption } from '../common/tracing';
+import { JobTrackerClient } from '../clients/jobTrackerClient';
 
 @singleton()
 export class CacheSeedManager {
@@ -24,7 +25,8 @@ export class CacheSeedManager {
     @inject(SERVICES.CONFIG) private readonly config: IConfig,
     @inject(SERVICES.TRACER) public readonly tracer: Tracer,
     private readonly queueClient: QueueClient,
-    private readonly mapproxySeed: MapproxySeed
+    private readonly mapproxySeed: MapproxySeed,
+    private readonly jobTrackerClient: JobTrackerClient
   ) {
     this.seedAttempts = this.config.get<number>('seedAttempts');
     this.taskType = this.config.get<string>('queue.tilesTaskType');
@@ -94,10 +96,7 @@ export class CacheSeedManager {
       });
       const cacheType = tilesTask.parameters.cacheType;
       await this.queueClient.queueHandlerForTileSeedingTasks.reject(tilesTask.jobId, tilesTask.id, false, `Unsupported cache type ${cacheType}`);
-      await this.queueClient.queueHandlerForTileSeedingTasks.jobManagerClient.updateJob(tilesTask.jobId, {
-        status: OperationStatus.FAILED,
-        reason: `Unsupported cache type ${cacheType}`,
-      });
+      await this.jobTrackerClient.notify(tilesTask.id);
       return false;
     } else {
       return true;
@@ -154,7 +153,7 @@ export class CacheSeedManager {
       trace.getActiveSpan()?.addEvent(logWarnMsg, logWarnObj);
 
       await this.queueClient.queueHandlerForTileSeedingTasks.reject(jobId, taskId, false);
-      await this.queueClient.queueHandlerForTileSeedingTasks.jobManagerClient.updateJob(jobId, { status: OperationStatus.FAILED });
+      await this.jobTrackerClient.notify(taskId);
       return false;
     }
 
@@ -162,10 +161,7 @@ export class CacheSeedManager {
       await this.delay(this.gracefulReloadMaxSeconds);
       await this.runTask(seeds, jobId, taskId);
       await this.queueClient.queueHandlerForTileSeedingTasks.ack(jobId, taskId);
-      await this.queueClient.queueHandlerForTileSeedingTasks.jobManagerClient.updateJob(jobId, {
-        status: OperationStatus.COMPLETED,
-        percentage: 100,
-      });
+      await this.jobTrackerClient.notify(taskId);
     } catch (err) {
       const errorObj = { jobId, taskId, msg: 'Reject task and increase attempts', err };
       this.logger.error(errorObj);

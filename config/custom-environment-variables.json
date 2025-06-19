@@ -74,5 +74,8 @@
     "__name": "GRACEFUL_BUMP_FACTOR",
     "__format": "number"
   },
-  "mapproxy_cmd_command": "MAPPROXY_CMD_COMMAND"
+  "mapproxy_cmd_command": "MAPPROXY_CMD_COMMAND",
+  "servicesUrl": {
+    "jobTracker": "JOB_TRACKER_URL"
+  }
 }
