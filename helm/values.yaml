@@ -93,6 +93,7 @@ serviceUrls:
   mapproxyApi: ""
   jobManager: ""
   heartbeatManager: ""
+  jobTracker: ""
 
 tracing:
   enabled: false

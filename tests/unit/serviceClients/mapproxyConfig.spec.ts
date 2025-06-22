@@ -48,6 +48,8 @@ describe('MapproxyConfigClient', () => {
     });
 
     it('should return error for unknown error mapproxy config', async function () {
+      nock(mapproxyTestUrl).get(`/config`).reply(500, 'Internal Server Error');
+
       const action = async () => {
         await mapproxyConfigClient.getConfig();
       };

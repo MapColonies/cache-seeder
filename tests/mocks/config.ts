@@ -84,6 +84,9 @@ const registerDefaultConfig = (): void => {
     },
     gracefulReloadMaxSeconds: 0,
     seedAttempts: 5,
+    servicesUrl: {
+      jobTracker: 'http://localhost:8090',
+    },
   };
   setConfigValues(config);
 };

@@ -51,6 +51,9 @@
     "geometryTxtFile": "/mapproxy/coverage.json",
     "seedProgressFileDir": "/mapproxy/mapproxy_seed_progress"
   },
+  "servicesUrl": {
+    "jobTracker": "http://localhost:8090"
+  },
   "seedAttempts": 5,
   "seedConcurrency": 5,
   "gracefulReloadMaxSeconds": 300,
