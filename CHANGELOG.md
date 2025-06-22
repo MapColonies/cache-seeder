@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [2.0.0](https://github.com-personal/MapColonies/cache-seeder/compare/v1.2.5...v2.0.0) (2025-06-22)
+
+
+### ⚠ BREAKING CHANGES
+
+* add and notify job tracker instead of updating job directly(MAPCO-7208) (#22)
+
+### Features
+
+* add and notify job tracker instead of updating job directly(MAPCO-7208) ([#22](https://github.com-personal/MapColonies/cache-seeder/issues/22)) ([21dd5bc](https://github.com-personal/MapColonies/cache-seeder/commit/21dd5bc3baa4caa8d408dc71eb342b6e9c41e47f))
+
 ### [1.2.5](https://github.com/MapColonies/cache-seeder/compare/v1.2.4...v1.2.5) (2025-02-24)
 
 
