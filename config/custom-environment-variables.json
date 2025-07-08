@@ -74,6 +74,10 @@
     "__name": "GRACEFUL_BUMP_FACTOR",
     "__format": "number"
   },
+    "bumpRefreshBeforeByYears": {
+    "__name": "BUMP_REFRESH_BEFORE_BY_YEARS",
+    "__format": "number"
+  },
   "mapproxy_cmd_command": "MAPPROXY_CMD_COMMAND",
   "servicesUrl": {
     "jobTracker": "JOB_TRACKER_URL"
