@@ -25,6 +25,7 @@ export class MapproxySeed {
   private readonly gracefulReloadMaxSeconds: number;
   private readonly secondsInMin: number;
   private readonly bumpFactor: number;
+  private readonly yearsBumpFactor: number;
   private readonly abortController: AbortController;
   private readonly mapproxyCmdCommand: string;
 
@@ -43,12 +44,13 @@ export class MapproxySeed {
     this.mapproxyCmdCommand = this.config.get<string>('mapproxy_cmd_command');
     this.secondsInMin = 60;
     this.bumpFactor = this.config.get<number>('gracefulBumpFactor');
+    this.yearsBumpFactor = this.config.get<number>('bumpRefreshBeforeByYears');
     this.abortController = new AbortController();
   }
 
   @withSpanAsyncV4
   public async runSeed(task: ISeed, jobId: string, taskId: string): Promise<void> {
-    task.refreshBefore = this.addTimeMinuteBuffer(task.refreshBefore);
+    task.refreshBefore = this.addTimeBuffer(task.refreshBefore);
 
     const logObject = {
       jobId,
@@ -105,7 +107,7 @@ export class MapproxySeed {
     }
   }
 
-  public addTimeMinuteBuffer(dataTimeStr: string): string {
+  public addTimeBuffer(dataTimeStr: string): string {
     const timeBufferMinute = Math.max(this.gracefulReloadMaxSeconds / this.secondsInMin, 1) * this.bumpFactor;
     const origDateTime = new Date(dataTimeStr);
     const minutes = origDateTime.getMinutes() + timeBufferMinute;
@@ -120,6 +122,7 @@ export class MapproxySeed {
       newDateTime.getSeconds()
     );
     const utcDate = new Date(nowUtc);
+    utcDate.setFullYear(utcDate.getFullYear() + this.yearsBumpFactor);
     const validSeedDateFormatted = utcDate.toISOString().replace(/\..+/, '');
 
     return validSeedDateFormatted;
