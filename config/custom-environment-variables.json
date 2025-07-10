@@ -74,7 +74,7 @@
     "__name": "GRACEFUL_BUMP_FACTOR",
     "__format": "number"
   },
-  "bumpRefreshBeforeByYears": {
+  "refreshBeforeYearsOffset": {
     "__name": "BUMP_REFRESH_BEFORE_BY_YEARS",
     "__format": "number"
   },
