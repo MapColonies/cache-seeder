@@ -45,9 +45,7 @@ export class MapproxySeed {
   @withSpanAsyncV4
   public async runSeed(task: ISeed, jobId: string, taskId: string): Promise<void> {
     if (!isValidDateFormat(task.refreshBefore)) {
-      throw new Error(
-        `Date string must be 'ISO_8601' format: yyyy-MM-dd'T'HH:mm:ss, for example: 2023-11-07T12:35:00`
-      );
+      throw new Error(`Date string must be 'ISO_8601' format: yyyy-MM-dd'T'HH:mm:ss, for example: 2023-11-07T12:35:00`);
     }
 
     task.refreshBefore = this.addTimeBuffer(task.refreshBefore);

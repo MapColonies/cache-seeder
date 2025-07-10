@@ -190,9 +190,7 @@ describe('#MapproxySeed', () => {
           await mapproxySeed.runSeed({ ...task.parameters.seedTasks[0], refreshBefore: 'badDate' }, task.jobId, task.id);
         };
 
-        await expect(action).rejects.toThrow(
-          `Date string must be 'ISO_8601' format: yyyy-MM-dd'T'HH:mm:ss, for example: 2023-11-07T12:35:00`
-        );
+        await expect(action).rejects.toThrow(`Date string must be 'ISO_8601' format: yyyy-MM-dd'T'HH:mm:ss, for example: 2023-11-07T12:35:00`);
         expect(writeMapproxyYamlSpy).toHaveBeenCalledTimes(0);
         expect(writeGeojsonTxtFileSpy).toHaveBeenCalledTimes(0);
         expect(createSeedYamlFileSpy).toHaveBeenCalledTimes(0);
