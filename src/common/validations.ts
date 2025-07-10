@@ -1,5 +1,4 @@
 import { promises, constants } from 'node:fs';
-import moment from 'moment';
 import { load } from 'js-yaml';
 import { ICacheSource, IMapProxyConfig } from './interfaces';
 import { CacheType } from './enums';
@@ -19,8 +18,8 @@ export const fileExists = async (filePath: string): Promise<boolean> => {
 };
 
 export const isValidDateFormat = (dateString: string): boolean => {
-  const isValidDateFormat = moment(dateString, moment.ISO_8601, true).isValid();
-  return isValidDateFormat;
+  const origDateTime = new Date(dateString);
+  return !isNaN(origDateTime.getTime());
 };
 
 export const isRedisCache = (cacheName: string, mapproxyConfigYaml: string): boolean => {

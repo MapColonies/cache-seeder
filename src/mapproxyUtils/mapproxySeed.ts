@@ -22,10 +22,7 @@ export class MapproxySeed {
   private readonly geometryCoverageFilePath: string;
   private readonly seedConcurrency: number;
   private readonly mapproxySeedProgressDir: string;
-  private readonly gracefulReloadMaxSeconds: number;
-  private readonly secondsInMin: number;
-  private readonly bumpFactor: number;
-  private readonly yearsBumpFactor: number;
+  private readonly yearsFactor: number;
   private readonly abortController: AbortController;
   private readonly mapproxyCmdCommand: string;
 
@@ -40,16 +37,19 @@ export class MapproxySeed {
     this.geometryCoverageFilePath = this.config.get<string>('mapproxy.geometryTxtFile');
     this.seedConcurrency = this.config.get<number>('seedConcurrency');
     this.mapproxySeedProgressDir = this.config.get<string>('mapproxy.seedProgressFileDir');
-    this.gracefulReloadMaxSeconds = this.config.get<number>('gracefulReloadMaxSeconds');
     this.mapproxyCmdCommand = this.config.get<string>('mapproxy_cmd_command');
-    this.secondsInMin = 60;
-    this.bumpFactor = this.config.get<number>('gracefulBumpFactor');
-    this.yearsBumpFactor = this.config.get<number>('bumpRefreshBeforeByYears');
+    this.yearsFactor = this.config.get<number>('refreshBeforeYearsOffset');
     this.abortController = new AbortController();
   }
 
   @withSpanAsyncV4
   public async runSeed(task: ISeed, jobId: string, taskId: string): Promise<void> {
+    if (!isValidDateFormat(task.refreshBefore)) {
+      throw new Error(
+        `failed seed for job of test with reason: Date string must be 'ISO_8601' format: yyyy-MM-dd'T'HH:mm:ss, for example: 2023-11-07T12:35:00`
+      );
+    }
+
     task.refreshBefore = this.addTimeBuffer(task.refreshBefore);
 
     const logObject = {
@@ -82,10 +82,6 @@ export class MapproxySeed {
         throw new Error(`from zoom level value cannot be bigger than to zoom level value`);
       }
 
-      if (!isValidDateFormat(task.refreshBefore)) {
-        throw new Error(`Date string must be 'ISO_8601' format: yyyy-MM-dd'T'HH:mm:ss, for example: 2023-11-07T12:35:00`);
-      }
-
       const currentMapproxyConfig = await this.mapproxyConfigClient.getConfig();
       if (!isRedisCache(task.layerId, currentMapproxyConfig as string)) {
         throw new Error(`Cache type should be of type Redis`);
@@ -108,21 +104,18 @@ export class MapproxySeed {
   }
 
   public addTimeBuffer(dataTimeStr: string): string {
-    const timeBufferMinute = Math.max(this.gracefulReloadMaxSeconds / this.secondsInMin, 1) * this.bumpFactor;
     const origDateTime = new Date(dataTimeStr);
-    const minutes = origDateTime.getMinutes() + timeBufferMinute;
-    const newDateTime = new Date(origDateTime.setMinutes(minutes));
 
     const nowUtc = Date.UTC(
-      newDateTime.getFullYear(),
-      newDateTime.getMonth(),
-      newDateTime.getDate(),
-      newDateTime.getHours(),
-      newDateTime.getMinutes(),
-      newDateTime.getSeconds()
+      origDateTime.getFullYear(),
+      origDateTime.getMonth(),
+      origDateTime.getDate(),
+      origDateTime.getHours(),
+      origDateTime.getMinutes(),
+      origDateTime.getSeconds()
     );
     const utcDate = new Date(nowUtc);
-    utcDate.setFullYear(utcDate.getFullYear() + this.yearsBumpFactor);
+    utcDate.setFullYear(utcDate.getFullYear() + this.yearsFactor);
     const validSeedDateFormatted = utcDate.toISOString().replace(/\..+/, '');
 
     return validSeedDateFormatted;
