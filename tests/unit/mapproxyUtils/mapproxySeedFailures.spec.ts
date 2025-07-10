@@ -185,8 +185,9 @@ describe('#MapproxySeed', () => {
         const addTimeBufferSpy = jest.spyOn(MapproxySeed.prototype as unknown as { addTimeBuffer: jest.Mock }, 'addTimeBuffer');
         const executeSeedSpy = jest.spyOn(MapproxySeed.prototype as unknown as { executeSeed: jest.Mock }, 'executeSeed');
         addTimeBufferSpy.mockImplementation((str) => str);
+
         const action = async () => {
-          await mapproxySeed.runSeed({ ...task.parameters.seedTasks[0], refreshBefore: 'badDate' } as unknown as ISeed, task.jobId, task.id);
+          await mapproxySeed.runSeed({ ...task.parameters.seedTasks[0], refreshBefore: 'badDate' }, task.jobId, task.id);
         };
 
         await expect(action).rejects.toThrow(

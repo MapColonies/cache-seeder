@@ -83,7 +83,7 @@ const registerDefaultConfig = (): void => {
       seedProgressFileDir: '/mapproxy/mapproxy_seed_progress',
     },
     gracefulReloadMaxSeconds: 0,
-    bumpRefreshBeforeByYears: 0,
+    refreshBeforeYearsOffset: 1,
     seedAttempts: 5,
     servicesUrl: {
       jobTracker: 'http://localhost:8090',
