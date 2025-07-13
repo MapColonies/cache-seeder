@@ -114,7 +114,7 @@ export class MapproxySeed {
     );
     const utcDate = new Date(nowUtc);
     utcDate.setFullYear(utcDate.getFullYear() + this.yearsOffset);
-    const validSeedDateFormatted = this.dateFormatting(utcDate);
+    const validSeedDateFormatted = this.dateToSeedingFormat(utcDate);
 
     return validSeedDateFormatted;
   }
@@ -273,7 +273,7 @@ export class MapproxySeed {
     return coverage;
   }
 
-    private dateFormatting(utcDate: Date): string {
+    private dateToSeedingFormat(utcDate: Date): string {
     return utcDate.toISOString().replace(/\..+/, '');
   }
 
