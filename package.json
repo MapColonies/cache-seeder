@@ -38,6 +38,7 @@
     }
   },
   "dependencies": {
+    "@faker-js/faker": "^9.2.0",
     "@godaddy/terminus": "^4.12.1",
     "@map-colonies/error-express-handler": "^2.1.0",
     "@map-colonies/error-types": "^1.1.5",
@@ -51,7 +52,6 @@
     "@opentelemetry/api-metrics": "0.23.0",
     "@opentelemetry/instrumentation-express": "0.32.1",
     "@opentelemetry/instrumentation-http": "0.35.1",
-    "@faker-js/faker": "^9.2.0",
     "compression": "^1.7.4",
     "config": "^3.3.9",
     "express": "^4.18.2",

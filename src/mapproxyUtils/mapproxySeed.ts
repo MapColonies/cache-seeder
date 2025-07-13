@@ -114,7 +114,7 @@ export class MapproxySeed {
     );
     const utcDate = new Date(nowUtc);
     utcDate.setFullYear(utcDate.getFullYear() + this.yearsOffset);
-    const validSeedDateFormatted = utcDate.toISOString().replace(/\..+/, '');
+    const validSeedDateFormatted = this.dateFormatting(utcDate);
 
     return validSeedDateFormatted;
   }
@@ -271,6 +271,10 @@ export class MapproxySeed {
       },
     };
     return coverage;
+  }
+
+    private dateFormatting(utcDate: Date): string {
+    return utcDate.toISOString().replace(/\..+/, '');
   }
 
   private getBaseCache(seedOptions: ISeed, coverageName: string): BaseCache {
