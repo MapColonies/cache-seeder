@@ -11,7 +11,7 @@ import { MapproxyConfigClient } from '../clients/mapproxyConfig';
 import { BaseCache, Cleanup, Seed, seedsSchema, cleanupsSchema, baseSchema } from '../common/schemas/seeds';
 import { Coverage, coveragesSchema } from '../common/schemas/coverages';
 import { SeedMode } from '../common/enums';
-import { fileExists, isGridExists, isRedisCache, isValidDateFormat, zoomComparison } from '../common/validations';
+import { fileExists, isGridExists, isRedisCache, validateDateFormat, zoomComparison } from '../common/validations';
 import { runCommand } from '../common/cmd';
 
 let isErroredCmd = false;
@@ -22,9 +22,7 @@ export class MapproxySeed {
   private readonly geometryCoverageFilePath: string;
   private readonly seedConcurrency: number;
   private readonly mapproxySeedProgressDir: string;
-  private readonly gracefulReloadMaxSeconds: number;
-  private readonly secondsInMin: number;
-  private readonly bumpFactor: number;
+  private readonly yearsOffset: number;
   private readonly abortController: AbortController;
   private readonly mapproxyCmdCommand: string;
 
@@ -39,16 +37,15 @@ export class MapproxySeed {
     this.geometryCoverageFilePath = this.config.get<string>('mapproxy.geometryTxtFile');
     this.seedConcurrency = this.config.get<number>('seedConcurrency');
     this.mapproxySeedProgressDir = this.config.get<string>('mapproxy.seedProgressFileDir');
-    this.gracefulReloadMaxSeconds = this.config.get<number>('gracefulReloadMaxSeconds');
     this.mapproxyCmdCommand = this.config.get<string>('mapproxy_cmd_command');
-    this.secondsInMin = 60;
-    this.bumpFactor = this.config.get<number>('gracefulBumpFactor');
+    this.yearsOffset = this.config.get<number>('refreshBeforeYearsOffset');
     this.abortController = new AbortController();
   }
 
   @withSpanAsyncV4
   public async runSeed(task: ISeed, jobId: string, taskId: string): Promise<void> {
-    task.refreshBefore = this.addTimeMinuteBuffer(task.refreshBefore);
+    validateDateFormat(task.refreshBefore);
+    task.refreshBefore = this.dateToSeedingFormat(this.addTimeBuffer(task.refreshBefore));
 
     const logObject = {
       jobId,
@@ -80,10 +77,6 @@ export class MapproxySeed {
         throw new Error(`from zoom level value cannot be bigger than to zoom level value`);
       }
 
-      if (!isValidDateFormat(task.refreshBefore)) {
-        throw new Error(`Date string must be 'ISO_8601' format: yyyy-MM-dd'T'HH:mm:ss, for example: 2023-11-07T12:35:00`);
-      }
-
       const currentMapproxyConfig = await this.mapproxyConfigClient.getConfig();
       if (!isRedisCache(task.layerId, currentMapproxyConfig as string)) {
         throw new Error(`Cache type should be of type Redis`);
@@ -103,26 +96,6 @@ export class MapproxySeed {
       this.logger.error({ msg: `failed seed for job (type of ${task.mode}) of ${task.layerId}`, jobId, taskId, err });
       throw new Error(`failed seed for job of ${task.layerId} with reason: ${(err as Error).message}`);
     }
-  }
-
-  public addTimeMinuteBuffer(dataTimeStr: string): string {
-    const timeBufferMinute = Math.max(this.gracefulReloadMaxSeconds / this.secondsInMin, 1) * this.bumpFactor;
-    const origDateTime = new Date(dataTimeStr);
-    const minutes = origDateTime.getMinutes() + timeBufferMinute;
-    const newDateTime = new Date(origDateTime.setMinutes(minutes));
-
-    const nowUtc = Date.UTC(
-      newDateTime.getFullYear(),
-      newDateTime.getMonth(),
-      newDateTime.getDate(),
-      newDateTime.getHours(),
-      newDateTime.getMinutes(),
-      newDateTime.getSeconds()
-    );
-    const utcDate = new Date(nowUtc);
-    const validSeedDateFormatted = utcDate.toISOString().replace(/\..+/, '');
-
-    return validSeedDateFormatted;
   }
 
   //TODO - should be integrated to update job status-progress mechanism
@@ -152,6 +125,23 @@ export class MapproxySeed {
     if (seedLogStr.match(/\((\d)+ tiles\)/g)) {
       this.logger.info(seedLogStr); // print only progress logs
     }
+  }
+
+  private addTimeBuffer(dataTimeStr: string): Date {
+    const origDateTime = new Date(dataTimeStr);
+
+    const nowUtc = Date.UTC(
+      origDateTime.getFullYear(),
+      origDateTime.getMonth(),
+      origDateTime.getDate(),
+      origDateTime.getHours(),
+      origDateTime.getMinutes(),
+      origDateTime.getSeconds()
+    );
+    const utcDate = new Date(nowUtc);
+    utcDate.setFullYear(utcDate.getFullYear() + this.yearsOffset);
+
+    return utcDate;
   }
 
   // eslint-disable-next-line @typescript-eslint/member-ordering
@@ -277,6 +267,10 @@ export class MapproxySeed {
       },
     };
     return coverage;
+  }
+
+  private dateToSeedingFormat(utcDate: Date): string {
+    return utcDate.toISOString().replace(/\..+/, '');
   }
 
   private getBaseCache(seedOptions: ISeed, coverageName: string): BaseCache {

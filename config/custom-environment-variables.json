@@ -70,8 +70,8 @@
     "__name": "GRACEFUL_RELOAD_MAX_SECONDS",
     "__format": "number"
   },
-  "gracefulBumpFactor": {
-    "__name": "GRACEFUL_BUMP_FACTOR",
+  "refreshBeforeYearsOffset": {
+    "__name": "REFRESH_BEFORE_YEARS_OFFSET",
     "__format": "number"
   },
   "mapproxy_cmd_command": "MAPPROXY_CMD_COMMAND",

@@ -1,5 +1,4 @@
 import { promises, constants } from 'node:fs';
-import moment from 'moment';
 import { load } from 'js-yaml';
 import { ICacheSource, IMapProxyConfig } from './interfaces';
 import { CacheType } from './enums';
@@ -18,9 +17,11 @@ export const fileExists = async (filePath: string): Promise<boolean> => {
   }
 };
 
-export const isValidDateFormat = (dateString: string): boolean => {
-  const isValidDateFormat = moment(dateString, moment.ISO_8601, true).isValid();
-  return isValidDateFormat;
+export const validateDateFormat = (dateString: string): void => {
+  const convertedDate = new Date(dateString);
+  if (isNaN(convertedDate.getTime())) {
+    throw new Error(`Date string must be 'ISO_8601' format: yyyy-MM-dd'T'HH:mm:ss, for example: 2023-11-07T12:35:00`);
+  }
 };
 
 export const isRedisCache = (cacheName: string, mapproxyConfigYaml: string): boolean => {
