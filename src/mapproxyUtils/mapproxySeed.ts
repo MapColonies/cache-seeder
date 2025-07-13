@@ -273,7 +273,7 @@ export class MapproxySeed {
     return coverage;
   }
 
-    private dateToSeedingFormat(utcDate: Date): string {
+  private dateToSeedingFormat(utcDate: Date): string {
     return utcDate.toISOString().replace(/\..+/, '');
   }
 
