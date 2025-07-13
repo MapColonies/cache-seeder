@@ -132,7 +132,7 @@ env:
   seedAttempts: 5
   seedConcurrency: 5
   mapproxyCmdCommand: "mapproxy-seed"
-  gracefulBumpFactor: 2
+  refreshBeforeYearsOffset: 1
 
 resources:
   enabled: true

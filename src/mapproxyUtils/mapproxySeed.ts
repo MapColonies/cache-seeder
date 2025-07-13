@@ -22,7 +22,7 @@ export class MapproxySeed {
   private readonly geometryCoverageFilePath: string;
   private readonly seedConcurrency: number;
   private readonly mapproxySeedProgressDir: string;
-  private readonly yearsFactor: number;
+  private readonly yearsOffset: number;
   private readonly abortController: AbortController;
   private readonly mapproxyCmdCommand: string;
 
@@ -38,7 +38,7 @@ export class MapproxySeed {
     this.seedConcurrency = this.config.get<number>('seedConcurrency');
     this.mapproxySeedProgressDir = this.config.get<string>('mapproxy.seedProgressFileDir');
     this.mapproxyCmdCommand = this.config.get<string>('mapproxy_cmd_command');
-    this.yearsFactor = this.config.get<number>('refreshBeforeYearsOffset');
+    this.yearsOffset = this.config.get<number>('refreshBeforeYearsOffset');
     this.abortController = new AbortController();
   }
 
@@ -113,7 +113,7 @@ export class MapproxySeed {
       origDateTime.getSeconds()
     );
     const utcDate = new Date(nowUtc);
-    utcDate.setFullYear(utcDate.getFullYear() + this.yearsFactor);
+    utcDate.setFullYear(utcDate.getFullYear() + this.yearsOffset);
     const validSeedDateFormatted = utcDate.toISOString().replace(/\..+/, '');
 
     return validSeedDateFormatted;

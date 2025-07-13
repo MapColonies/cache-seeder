@@ -40,6 +40,6 @@ data:
   REDIS_TLS: {{ .Values.redis.tls | quote}}
   {{ end }}
   GRACEFUL_RELOAD_MAX_SECONDS: {{ .Values.global.gracefulReloadMaxSeconds | quote }}
-  GRACEFUL_BUMP_FACTOR: {{ .Values.env.gracefulBumpFactor | quote }}
+  REFRESH_BEFORE_YEARS_OFFSET: {{ .Values.env.refreshBeforeYearsOffset | quote }}
   MAPPROXY_CMD_COMMAND: {{ .Values.env.mapproxyCmdCommand | quote }}
 {{- end }}

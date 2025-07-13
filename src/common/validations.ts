@@ -18,8 +18,8 @@ export const fileExists = async (filePath: string): Promise<boolean> => {
 };
 
 export const isValidDateFormat = (dateString: string): boolean => {
-  const origDateTime = new Date(dateString);
-  return !isNaN(origDateTime.getTime());
+  const convertedDate = new Date(dateString);
+  return !isNaN(convertedDate.getTime());
 };
 
 export const isRedisCache = (cacheName: string, mapproxyConfigYaml: string): boolean => {

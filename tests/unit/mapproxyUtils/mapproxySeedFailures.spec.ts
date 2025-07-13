@@ -8,7 +8,7 @@ import { getApp } from '../../../src/app';
 import { getTask } from '../../mockData/testStaticData';
 import { getContainerConfig, resetContainer } from '../testContainerConfig';
 import { MapproxySeed } from '../../../src/mapproxyUtils/mapproxySeed';
-import { IQueueConfig, ISeed } from '../../../src/common/interfaces';
+import { IQueueConfig } from '../../../src/common/interfaces';
 import { MapproxyConfigClient } from '../../../src/clients/mapproxyConfig';
 import { tracerMock } from '../../mocks/tracer';
 
@@ -182,9 +182,7 @@ describe('#MapproxySeed', () => {
         const writeMapproxyYamlSpy = jest.spyOn(MapproxySeed.prototype as unknown as { writeMapproxyYaml: jest.Mock }, 'writeMapproxyYaml');
         const writeGeojsonTxtFileSpy = jest.spyOn(MapproxySeed.prototype as unknown as { writeGeojsonTxtFile: jest.Mock }, 'writeGeojsonTxtFile');
         const createSeedYamlFileSpy = jest.spyOn(MapproxySeed.prototype as unknown as { createSeedYamlFile: jest.Mock }, 'createSeedYamlFile');
-        const addTimeBufferSpy = jest.spyOn(MapproxySeed.prototype as unknown as { addTimeBuffer: jest.Mock }, 'addTimeBuffer');
         const executeSeedSpy = jest.spyOn(MapproxySeed.prototype as unknown as { executeSeed: jest.Mock }, 'executeSeed');
-        addTimeBufferSpy.mockImplementation((str) => str);
 
         const action = async () => {
           await mapproxySeed.runSeed({ ...task.parameters.seedTasks[0], refreshBefore: 'badDate' }, task.jobId, task.id);
