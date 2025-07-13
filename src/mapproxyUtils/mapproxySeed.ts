@@ -130,7 +130,7 @@ export class MapproxySeed {
     }
   }
 
-    private addTimeBuffer(dataTimeStr: string): Date {
+  private addTimeBuffer(dataTimeStr: string): Date {
     const origDateTime = new Date(dataTimeStr);
 
     const nowUtc = Date.UTC(
