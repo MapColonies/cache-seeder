@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [2.1.0](https://github.com/MapColonies/cache-seeder/compare/v2.0.0...v2.1.0) (2025-07-13)
+
+
+### Features
+
+* add option to do offset years in refresh_before setting ([#23](https://github.com/MapColonies/cache-seeder/issues/23)) ([34df954](https://github.com/MapColonies/cache-seeder/commit/34df954dadca036faeb125b0a1f600960668413a))
+
 ## [2.0.0](https://github.com-personal/MapColonies/cache-seeder/compare/v1.2.5...v2.0.0) (2025-06-22)
 
 
