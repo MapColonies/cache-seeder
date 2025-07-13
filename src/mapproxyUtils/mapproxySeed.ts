@@ -44,7 +44,7 @@ export class MapproxySeed {
 
   @withSpanAsyncV4
   public async runSeed(task: ISeed, jobId: string, taskId: string): Promise<void> {
-    validateDateFormat(task.refreshBefore)
+    validateDateFormat(task.refreshBefore);
     task.refreshBefore = this.dateToSeedingFormat(this.addTimeBuffer(task.refreshBefore));
 
     const logObject = {
