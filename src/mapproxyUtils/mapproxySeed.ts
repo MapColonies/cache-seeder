@@ -48,7 +48,7 @@ export class MapproxySeed {
       throw new Error(`Date string must be 'ISO_8601' format: yyyy-MM-dd'T'HH:mm:ss, for example: 2023-11-07T12:35:00`);
     }
 
-    task.refreshBefore = this.addTimeBuffer(task.refreshBefore);
+    task.refreshBefore = this.dateToSeedingFormat(this.addTimeBuffer(task.refreshBefore));
 
     const logObject = {
       jobId,
@@ -101,7 +101,7 @@ export class MapproxySeed {
     }
   }
 
-  public addTimeBuffer(dataTimeStr: string): string {
+  public addTimeBuffer(dataTimeStr: string): Date {
     const origDateTime = new Date(dataTimeStr);
 
     const nowUtc = Date.UTC(
@@ -114,9 +114,8 @@ export class MapproxySeed {
     );
     const utcDate = new Date(nowUtc);
     utcDate.setFullYear(utcDate.getFullYear() + this.yearsOffset);
-    const validSeedDateFormatted = this.dateToSeedingFormat(utcDate);
 
-    return validSeedDateFormatted;
+    return utcDate;
   }
 
   //TODO - should be integrated to update job status-progress mechanism
