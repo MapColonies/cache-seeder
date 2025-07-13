@@ -11,7 +11,7 @@ import { MapproxyConfigClient } from '../clients/mapproxyConfig';
 import { BaseCache, Cleanup, Seed, seedsSchema, cleanupsSchema, baseSchema } from '../common/schemas/seeds';
 import { Coverage, coveragesSchema } from '../common/schemas/coverages';
 import { SeedMode } from '../common/enums';
-import { fileExists, isGridExists, isRedisCache, isValidDateFormat, zoomComparison } from '../common/validations';
+import { fileExists, isGridExists, isRedisCache, validateDateFormat, zoomComparison } from '../common/validations';
 import { runCommand } from '../common/cmd';
 
 let isErroredCmd = false;
@@ -44,10 +44,7 @@ export class MapproxySeed {
 
   @withSpanAsyncV4
   public async runSeed(task: ISeed, jobId: string, taskId: string): Promise<void> {
-    if (!isValidDateFormat(task.refreshBefore)) {
-      throw new Error(`Date string must be 'ISO_8601' format: yyyy-MM-dd'T'HH:mm:ss, for example: 2023-11-07T12:35:00`);
-    }
-
+    validateDateFormat(task.refreshBefore)
     task.refreshBefore = this.dateToSeedingFormat(this.addTimeBuffer(task.refreshBefore));
 
     const logObject = {

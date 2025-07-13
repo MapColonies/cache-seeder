@@ -17,9 +17,12 @@ export const fileExists = async (filePath: string): Promise<boolean> => {
   }
 };
 
-export const isValidDateFormat = (dateString: string): boolean => {
+export const validateDateFormat = (dateString: string): boolean => {
   const convertedDate = new Date(dateString);
-  return !isNaN(convertedDate.getTime());
+  if (isNaN(convertedDate.getTime())) {
+    throw new Error(`Date string must be 'ISO_8601' format: yyyy-MM-dd'T'HH:mm:ss, for example: 2023-11-07T12:35:00`);
+  }
+  return true;
 };
 
 export const isRedisCache = (cacheName: string, mapproxyConfigYaml: string): boolean => {
