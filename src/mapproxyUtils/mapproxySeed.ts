@@ -101,23 +101,6 @@ export class MapproxySeed {
     }
   }
 
-  public addTimeBuffer(dataTimeStr: string): Date {
-    const origDateTime = new Date(dataTimeStr);
-
-    const nowUtc = Date.UTC(
-      origDateTime.getFullYear(),
-      origDateTime.getMonth(),
-      origDateTime.getDate(),
-      origDateTime.getHours(),
-      origDateTime.getMinutes(),
-      origDateTime.getSeconds()
-    );
-    const utcDate = new Date(nowUtc);
-    utcDate.setFullYear(utcDate.getFullYear() + this.yearsOffset);
-
-    return utcDate;
-  }
-
   //TODO - should be integrated to update job status-progress mechanism
   //     - calculate dynamically the actual percentage
   //     - send update percentage to total percentage on job-task tables
@@ -145,6 +128,23 @@ export class MapproxySeed {
     if (seedLogStr.match(/\((\d)+ tiles\)/g)) {
       this.logger.info(seedLogStr); // print only progress logs
     }
+  }
+
+    private addTimeBuffer(dataTimeStr: string): Date {
+    const origDateTime = new Date(dataTimeStr);
+
+    const nowUtc = Date.UTC(
+      origDateTime.getFullYear(),
+      origDateTime.getMonth(),
+      origDateTime.getDate(),
+      origDateTime.getHours(),
+      origDateTime.getMinutes(),
+      origDateTime.getSeconds()
+    );
+    const utcDate = new Date(nowUtc);
+    utcDate.setFullYear(utcDate.getFullYear() + this.yearsOffset);
+
+    return utcDate;
   }
 
   // eslint-disable-next-line @typescript-eslint/member-ordering
