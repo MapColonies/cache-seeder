@@ -58,6 +58,14 @@
     "seedYamlDir": "SEED_YAML_DIR",
     "geometryTxtFile": "GEOMETRY_TXT_FILE"
   },
+  "redis": {
+    "username": "REDIS_USERNAME",
+    "password": "REDIS_PASSWORD",
+    "tls": {
+      "__name": "REDIS_TLS",
+      "__format": "boolean"
+    }
+  },
   "seedAttempts": {
     "__name": "SEED_ATTEMPTS",
     "__format": "number"
@@ -77,5 +85,9 @@
   "mapproxy_cmd_command": "MAPPROXY_CMD_COMMAND",
   "servicesUrl": {
     "jobTracker": "JOB_TRACKER_URL"
+  },
+  "invalidBboxSeedBufferMeters": {
+    "__name": "INVALID_BBOX_SEED_BUFFER_METERS",
+    "__format": "number"
   }
 }

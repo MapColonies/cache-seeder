@@ -51,6 +51,11 @@
     "geometryTxtFile": "/mapproxy/coverage.json",
     "seedProgressFileDir": "/mapproxy/mapproxy_seed_progress"
   },
+  "redis": {
+    "username": "",
+    "password": "",
+    "tls": false
+  },
   "servicesUrl": {
     "jobTracker": "http://localhost:8090"
   },
@@ -58,5 +63,6 @@
   "seedConcurrency": 5,
   "gracefulReloadMaxSeconds": 300,
   "refreshBeforeYearsOffset": 1,
-  "mapproxy_cmd_command": "mapproxy-seed"
+  "mapproxy_cmd_command": "mapproxy-seed",
+  "invalidBboxSeedBufferMeters": 600
 }

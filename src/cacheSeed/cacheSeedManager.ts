@@ -1,4 +1,6 @@
 import { setTimeout as setTimeoutPromise } from 'timers/promises';
+import buffer from '@turf/buffer';
+import { Polygon } from 'geojson';
 import { Logger } from '@map-colonies/js-logger';
 import { inject, singleton } from 'tsyringe';
 import { ITaskResponse } from '@map-colonies/mc-priority-queue';
@@ -19,6 +21,7 @@ export class CacheSeedManager {
   private readonly taskType: string;
   private readonly msToSeconds: number;
   private readonly gracefulReloadMaxSeconds: number;
+  private readonly invalidBboxSeedBufferMeters: number;
 
   public constructor(
     @inject(SERVICES.LOGGER) private readonly logger: Logger,
@@ -31,6 +34,7 @@ export class CacheSeedManager {
     this.seedAttempts = this.config.get<number>('seedAttempts');
     this.taskType = this.config.get<string>('queue.tilesTaskType');
     this.gracefulReloadMaxSeconds = this.config.get<number>('gracefulReloadMaxSeconds');
+    this.invalidBboxSeedBufferMeters = this.config.get<number>('invalidBboxSeedBufferMeters');
     this.msToSeconds = 1000;
   }
 
@@ -39,6 +43,15 @@ export class CacheSeedManager {
     const tilesTask = await this.queueClient.queueHandlerForTileSeedingTasks.dequeue<ITaskParams>(this.taskType);
     if (!tilesTask) {
       return Boolean(tilesTask);
+    }
+    if (tilesTask.reason.includes('mapproxy.grid.GridError: Invalid BBOX')) {
+      this.logger.debug(`Buffering invalid bbox by ${this.invalidBboxSeedBufferMeters} meters and retrying`);
+      tilesTask.parameters.seedTasks.map((task) => {
+        const buffered = buffer(task.geometry as Polygon, this.invalidBboxSeedBufferMeters, { units: 'meters' });
+        if (buffered !== undefined) {
+          task.geometry = buffered.geometry;
+        }
+      });
     }
 
     const spanOptions = this.getInitialSpanOption(tilesTask);
