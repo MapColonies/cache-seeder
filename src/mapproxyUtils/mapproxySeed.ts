@@ -1,5 +1,7 @@
 import { promises as fsp } from 'node:fs';
 import { dump } from 'js-yaml';
+import buffer from '@turf/buffer';
+import { Feature, Polygon } from 'geojson';
 import { Logger } from '@map-colonies/js-logger';
 import { inject, singleton } from 'tsyringe';
 import { Tracer, trace } from '@opentelemetry/api';
@@ -25,6 +27,7 @@ export class MapproxySeed {
   private readonly yearsOffset: number;
   private readonly abortController: AbortController;
   private readonly mapproxyCmdCommand: string;
+  private readonly invalidBboxSeedBufferMeters: number;
 
   public constructor(
     @inject(SERVICES.LOGGER) private readonly logger: Logger,
@@ -39,6 +42,7 @@ export class MapproxySeed {
     this.mapproxySeedProgressDir = this.config.get<string>('mapproxy.seedProgressFileDir');
     this.mapproxyCmdCommand = this.config.get<string>('mapproxy_cmd_command');
     this.yearsOffset = this.config.get<number>('refreshBeforeYearsOffset');
+    this.invalidBboxSeedBufferMeters = this.config.get<number>('invalidBboxSeedBufferMeters');
     this.abortController = new AbortController();
   }
 
@@ -93,8 +97,18 @@ export class MapproxySeed {
       await this.executeSeed(task, jobId, taskId);
       this.logger.info({ msg: `complete seed (type of ${task.mode}) for job of ${task.layerId}`, jobId, taskId });
     } catch (err) {
-      this.logger.error({ msg: `failed seed for job (type of ${task.mode}) of ${task.layerId}`, jobId, taskId, err });
-      throw new Error(`failed seed for job of ${task.layerId} with reason: ${(err as Error).message}`);
+      if (err instanceof Error && err.message.includes('mapproxy.grid.GridError: Invalid BBOX')) {
+        this.logger.warn(`Buffering invalid bbox by ${this.invalidBboxSeedBufferMeters} meters and retrying`);
+        const bufferedPolygon = buffer(task.geometry as Feature<Polygon>, this.invalidBboxSeedBufferMeters, { units: 'meters' });
+        if (bufferedPolygon !== undefined) {
+          const bufferedTask = { ...task, geometry: bufferedPolygon };
+          await this.writeGeojsonTxtFile(this.geometryCoverageFilePath, JSON.stringify(bufferedPolygon), jobId, taskId);
+          await this.executeSeed(bufferedTask, jobId, taskId);
+        }
+      } else {
+        this.logger.error({ msg: `failed seed for job (type of ${task.mode}) of ${task.layerId}`, jobId, taskId, err });
+        throw new Error(`failed seed for job of ${task.layerId} with reason: ${(err as Error).message}`);
+      }
     }
   }
 

@@ -1,6 +1,4 @@
 import { setTimeout as setTimeoutPromise } from 'timers/promises';
-import buffer from '@turf/buffer';
-import { Polygon } from 'geojson';
 import { Logger } from '@map-colonies/js-logger';
 import { inject, singleton } from 'tsyringe';
 import { ITaskResponse } from '@map-colonies/mc-priority-queue';
@@ -43,15 +41,6 @@ export class CacheSeedManager {
     const tilesTask = await this.queueClient.queueHandlerForTileSeedingTasks.dequeue<ITaskParams>(this.taskType);
     if (!tilesTask) {
       return Boolean(tilesTask);
-    }
-    if (tilesTask.reason.includes('mapproxy.grid.GridError: Invalid BBOX')) {
-      this.logger.debug(`Buffering invalid bbox by ${this.invalidBboxSeedBufferMeters} meters and retrying`);
-      tilesTask.parameters.seedTasks.map((task) => {
-        const buffered = buffer(task.geometry as Polygon, this.invalidBboxSeedBufferMeters, { units: 'meters' });
-        if (buffered !== undefined) {
-          task.geometry = buffered.geometry;
-        }
-      });
     }
 
     const spanOptions = this.getInitialSpanOption(tilesTask);
