@@ -88,6 +88,7 @@ const registerDefaultConfig = (): void => {
     servicesUrl: {
       jobTracker: 'http://localhost:8090',
     },
+    invalidBboxSeedBufferMeters: 600,
   };
   setConfigValues(config);
 };

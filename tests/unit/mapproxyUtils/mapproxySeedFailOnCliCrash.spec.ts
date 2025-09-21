@@ -1,6 +1,7 @@
 import { readFileSync, promises as fsp } from 'node:fs';
 import jsLogger from '@map-colonies/js-logger';
 import nock from 'nock';
+import * as turfBufferModule from '@turf/buffer';
 import { IHttpRetryConfig } from '@map-colonies/mc-utils';
 import { configMock, init as initConfig, clear as clearConfig, setValue } from '../../mocks/config';
 import { getApp } from '../../../src/app';
@@ -62,6 +63,7 @@ describe('#MapproxySeed', () => {
       const seedProgressFuncSpy = jest.spyOn(MapproxySeed.prototype as unknown as { seedProgressFunc: jest.Mock }, 'seedProgressFunc');
       writeFileStub = jest.spyOn(fsp, 'writeFile').mockImplementation(async () => undefined);
       accessStub = jest.spyOn(fsp, 'access').mockImplementation(async () => undefined);
+      const bufferSpy = jest.spyOn(turfBufferModule, 'default');
 
       const action = async () => {
         await mapproxySeed.runSeed(task.parameters.seedTasks[0], task.jobId, task.id);
@@ -81,10 +83,11 @@ describe('#MapproxySeed', () => {
       expect(createSeedYamlFileSpy).toHaveBeenCalledTimes(1);
       expect(accessStub).toHaveBeenCalledTimes(2);
       expect(getSeedSpy).toHaveBeenCalledTimes(1);
-      expect(getCleanupSpy).toHaveBeenCalledTimes(0);
+      expect(getCleanupSpy).not.toHaveBeenCalled();
       expect(writeFileStub).toHaveBeenNthCalledWith(3, configMock.get('mapproxy.seedYamlDir'), seedYamlContent);
       expect(executeSeedSpy).toHaveBeenCalledTimes(1);
-      expect(seedProgressFuncSpy).toHaveBeenCalledTimes(0);
+      expect(seedProgressFuncSpy).not.toHaveBeenCalled();
+      expect(bufferSpy).not.toHaveBeenCalled();
     });
   });
 });

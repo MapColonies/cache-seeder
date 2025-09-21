@@ -1,6 +1,7 @@
 import { readFileSync, promises as fsp } from 'node:fs';
 import jsLogger from '@map-colonies/js-logger';
 import nock from 'nock';
+import * as turfBufferModule from '@turf/buffer';
 import { IHttpRetryConfig } from '@map-colonies/mc-utils';
 import * as cmd from '../../../src/common/cmd';
 import { configMock, init as initConfig, clear as clearConfig, setValue } from '../../mocks/config';
@@ -59,6 +60,7 @@ describe('#MapproxySeed', () => {
       const getSeedSpy = jest.spyOn(MapproxySeed.prototype as unknown as { getSeed: jest.Mock }, 'getSeed');
       const getCleanupSpy = jest.spyOn(MapproxySeed.prototype as unknown as { getCleanup: jest.Mock }, 'getCleanup');
       const executeSeedSpy = jest.spyOn(MapproxySeed.prototype as unknown as { executeSeed: jest.Mock }, 'executeSeed');
+      const bufferSpy = jest.spyOn(turfBufferModule, 'default');
 
       const runCommandStub = jest.spyOn(cmd, 'runCommand').mockResolvedValue(undefined);
       writeFileStub = jest.spyOn(fsp, 'writeFile').mockImplementation(async () => undefined);
@@ -82,6 +84,7 @@ describe('#MapproxySeed', () => {
       expect(writeFileStub).toHaveBeenNthCalledWith(3, configMock.get('mapproxy.seedYamlDir'), seedYamlContent);
       expect(executeSeedSpy).toHaveBeenCalledTimes(1);
       expect(runCommandStub).toHaveBeenCalledTimes(1);
+      expect(bufferSpy).not.toHaveBeenCalled();
       expect(runCommandStub).toHaveBeenCalledWith(
         configMock.get<string>('mapproxy_cmd_command'),
         [

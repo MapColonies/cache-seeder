@@ -1,6 +1,7 @@
 import { readFileSync, promises as fsp } from 'node:fs';
 import jsLogger from '@map-colonies/js-logger';
 import nock from 'nock';
+import * as turfBufferModule from '@turf/buffer';
 import { IHttpRetryConfig } from '@map-colonies/mc-utils';
 import * as cmd from '../../../src/common/cmd';
 import { configMock, init as initConfig, clear as clearConfig, setValue } from '../../mocks/config';
@@ -63,6 +64,7 @@ describe('#MapproxySeed', () => {
         const cmdSeedErrMsg = 'some running mapproxy-seed error';
         const runCommandStub = jest.spyOn(cmd, 'runCommand').mockRejectedValue(new Error(cmdSeedErrMsg));
         const executeSeedSpy = jest.spyOn(MapproxySeed.prototype as unknown as { executeSeed: jest.Mock }, 'executeSeed');
+        const bufferSpy = jest.spyOn(turfBufferModule, 'default');
 
         writeFileStub = jest.spyOn(fsp, 'writeFile').mockImplementation(async () => undefined);
         accessStub = jest.spyOn(fsp, 'access').mockImplementation(async () => undefined);
@@ -89,6 +91,7 @@ describe('#MapproxySeed', () => {
         expect(writeFileStub).toHaveBeenNthCalledWith(3, configMock.get('mapproxy.seedYamlDir'), seedYamlContent);
         expect(executeSeedSpy).toHaveBeenCalledTimes(1);
         expect(runCommandStub).toHaveBeenCalledTimes(1);
+        expect(bufferSpy).not.toHaveBeenCalled();
         expect(runCommandStub).toHaveBeenCalledWith(
           configMock.get<string>('mapproxy_cmd_command'),
           [
@@ -165,6 +168,7 @@ describe('#MapproxySeed', () => {
         const writeGeojsonTxtFileSpy = jest.spyOn(MapproxySeed.prototype as unknown as { writeGeojsonTxtFile: jest.Mock }, 'writeGeojsonTxtFile');
         const createSeedYamlFileSpy = jest.spyOn(MapproxySeed.prototype as unknown as { createSeedYamlFile: jest.Mock }, 'createSeedYamlFile');
         const executeSeedSpy = jest.spyOn(MapproxySeed.prototype as unknown as { executeSeed: jest.Mock }, 'executeSeed');
+        const bufferSpy = jest.spyOn(turfBufferModule, 'default');
 
         const action = async () => {
           await mapproxySeed.runSeed({ ...task.parameters.seedTasks[0], toZoomLevel: 1, fromZoomLevel: 20 }, task.jobId, task.id);
@@ -175,6 +179,7 @@ describe('#MapproxySeed', () => {
         expect(writeGeojsonTxtFileSpy).toHaveBeenCalledTimes(0);
         expect(createSeedYamlFileSpy).toHaveBeenCalledTimes(0);
         expect(executeSeedSpy).toHaveBeenCalledTimes(0);
+        expect(bufferSpy).not.toHaveBeenCalled();
       });
 
       it('Failed on bad date format (not ISO_8601)', async function () {
@@ -183,6 +188,7 @@ describe('#MapproxySeed', () => {
         const writeGeojsonTxtFileSpy = jest.spyOn(MapproxySeed.prototype as unknown as { writeGeojsonTxtFile: jest.Mock }, 'writeGeojsonTxtFile');
         const createSeedYamlFileSpy = jest.spyOn(MapproxySeed.prototype as unknown as { createSeedYamlFile: jest.Mock }, 'createSeedYamlFile');
         const executeSeedSpy = jest.spyOn(MapproxySeed.prototype as unknown as { executeSeed: jest.Mock }, 'executeSeed');
+        const bufferSpy = jest.spyOn(turfBufferModule, 'default');
 
         const action = async () => {
           await mapproxySeed.runSeed({ ...task.parameters.seedTasks[0], refreshBefore: 'badDate' }, task.jobId, task.id);
@@ -193,6 +199,7 @@ describe('#MapproxySeed', () => {
         expect(writeGeojsonTxtFileSpy).toHaveBeenCalledTimes(0);
         expect(createSeedYamlFileSpy).toHaveBeenCalledTimes(0);
         expect(executeSeedSpy).toHaveBeenCalledTimes(0);
+        expect(bufferSpy).not.toHaveBeenCalled();
       });
 
       it('Failed on not exists file (mapproxyYaml)', async function () {
@@ -206,6 +213,7 @@ describe('#MapproxySeed', () => {
 
         writeFileStub = jest.spyOn(fsp, 'writeFile').mockImplementation(async () => undefined);
         accessStub = jest.spyOn(fsp, 'access').mockRejectedValueOnce(new Error('Unknown error'));
+        const bufferSpy = jest.spyOn(turfBufferModule, 'default');
 
         const action = async () => {
           await mapproxySeed.runSeed(task.parameters.seedTasks[0], task.jobId, task.id);
@@ -227,6 +235,7 @@ describe('#MapproxySeed', () => {
         );
         expect(createSeedYamlFileSpy).toHaveBeenCalledTimes(1);
         expect(accessStub).toHaveBeenCalledTimes(1);
+        expect(bufferSpy).not.toHaveBeenCalled();
       });
 
       it('Failed on not valid cache type on mapproxyYaml (not redis)', async function () {
@@ -238,6 +247,7 @@ describe('#MapproxySeed', () => {
 
         writeFileStub = jest.spyOn(fsp, 'writeFile').mockImplementation(async () => undefined);
         accessStub = jest.spyOn(fsp, 'access').mockImplementation(async () => undefined);
+        const bufferSpy = jest.spyOn(turfBufferModule, 'default');
 
         const action = async () => {
           await mapproxySeed.runSeed(task.parameters.seedTasks[0], task.jobId, task.id);
@@ -246,6 +256,7 @@ describe('#MapproxySeed', () => {
         await expect(action).rejects.toThrow(`failed seed for job of test with reason: Cache type should be of type Redis`);
         expect(writeMapproxyYamlSpy).toHaveBeenCalledTimes(0);
         expect(writeFileStub).toHaveBeenCalledTimes(0);
+        expect(bufferSpy).not.toHaveBeenCalled();
       });
 
       it('Failed on not exists file (geometryCoverageFileJson)', async function () {
@@ -260,6 +271,7 @@ describe('#MapproxySeed', () => {
         writeFileStub = jest.spyOn(fsp, 'writeFile').mockImplementation(async () => undefined);
         accessStub = jest.spyOn(fsp, 'access').mockResolvedValueOnce(undefined);
         accessStub = jest.spyOn(fsp, 'access').mockRejectedValueOnce(new Error('Unknown error'));
+        const bufferSpy = jest.spyOn(turfBufferModule, 'default');
 
         const action = async () => {
           await mapproxySeed.runSeed(task.parameters.seedTasks[0], task.jobId, task.id);
@@ -281,6 +293,7 @@ describe('#MapproxySeed', () => {
         );
         expect(createSeedYamlFileSpy).toHaveBeenCalledTimes(1);
         expect(accessStub).toHaveBeenCalledTimes(2);
+        expect(bufferSpy).not.toHaveBeenCalled();
       });
 
       it('Failed on not exists grid', async function () {
@@ -296,6 +309,7 @@ describe('#MapproxySeed', () => {
         writeFileStub = jest.spyOn(fsp, 'writeFile').mockImplementation(async () => undefined);
         accessStub = jest.spyOn(fsp, 'access').mockResolvedValueOnce(undefined);
         accessStub = jest.spyOn(fsp, 'access').mockRejectedValueOnce(new Error('Unknown error'));
+        const bufferSpy = jest.spyOn(turfBufferModule, 'default');
 
         const action = async () => {
           await mapproxySeed.runSeed(badGridTask, task.jobId, task.id);
@@ -307,6 +321,7 @@ describe('#MapproxySeed', () => {
         expect(writeFileStub).toHaveBeenCalledTimes(0);
         expect(writeGeojsonTxtFileSpy).toHaveBeenCalledTimes(0);
         expect(createSeedYamlFileSpy).toHaveBeenCalledTimes(0);
+        expect(bufferSpy).not.toHaveBeenCalled();
       });
     });
   });
