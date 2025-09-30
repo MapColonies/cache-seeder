@@ -14,6 +14,7 @@ module.exports = {
     '!**/routes/**',
     '!<rootDir>/src/*',
   ],
+  // setupFilesAfterEnv: ['jest-extended/all'],
   coverageDirectory: '<rootDir>/coverage',
   reporters: [
     'default',

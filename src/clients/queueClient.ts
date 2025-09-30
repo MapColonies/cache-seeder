@@ -20,13 +20,12 @@ export class QueueClient {
 
     this.queueHandlerForTileSeedingTasks = new QueueHandler(
       logger,
-      this.queueConfig.jobType,
       this.queueConfig.jobManagerBaseUrl,
       this.queueConfig.heartbeat.heartbeatManagerBaseUrl,
       this.queueConfig.dequeueIntervalMs,
       this.queueConfig.heartbeat.heartbeatIntervalMs,
       this.httpRetryConfig
     );
-    this.jobsClient = new JobManagerClient(logger, this.queueConfig.jobType, this.queueConfig.jobManagerBaseUrl, this.httpRetryConfig);
+    this.jobsClient = new JobManagerClient(logger, this.queueConfig.jobManagerBaseUrl, this.httpRetryConfig);
   }
 }

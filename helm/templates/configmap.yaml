@@ -42,5 +42,6 @@ data:
   GRACEFUL_RELOAD_MAX_SECONDS: {{ .Values.global.gracefulReloadMaxSeconds | quote }}
   REFRESH_BEFORE_YEARS_OFFSET: {{ .Values.env.refreshBeforeYearsOffset | quote }}
   MAPPROXY_CMD_COMMAND: {{ .Values.env.mapproxyCmdCommand | quote }}
-  INVALID_BBOX_SEED_BUFFER_METERS: {{ .Values.env.invalidBboxSeedBufferMeters | quote }}
+  INVALID_BBOX_SEED_BUFFER_METERS: {{ .Values.env.minInvalidBboxSeedBufferMeters | quote }}
+  MAX_RETRIES_ON_INVALID_BBOX: {{ .Values.env.maxRetriesOnInvalidBbox | quote }}
 {{- end }}

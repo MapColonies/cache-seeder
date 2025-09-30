@@ -15,6 +15,7 @@ import { Coverage, coveragesSchema } from '../common/schemas/coverages';
 import { SeedMode } from '../common/enums';
 import { fileExists, isGridExists, isRedisCache, validateDateFormat, zoomComparison } from '../common/validations';
 import { runCommand } from '../common/cmd';
+import { ExceededMaxRetriesError } from '../common/errors';
 
 let isErroredCmd = false;
 @singleton()
@@ -27,7 +28,8 @@ export class MapproxySeed {
   private readonly yearsOffset: number;
   private readonly abortController: AbortController;
   private readonly mapproxyCmdCommand: string;
-  private readonly invalidBboxSeedBufferMeters: number;
+  private readonly minInvalidBboxSeedBufferMeters: number;
+  private readonly maxRetriesOnInvalidBbox: number;
 
   public constructor(
     @inject(SERVICES.LOGGER) private readonly logger: Logger,
@@ -42,7 +44,8 @@ export class MapproxySeed {
     this.mapproxySeedProgressDir = this.config.get<string>('mapproxy.seedProgressFileDir');
     this.mapproxyCmdCommand = this.config.get<string>('mapproxy_cmd_command');
     this.yearsOffset = this.config.get<number>('refreshBeforeYearsOffset');
-    this.invalidBboxSeedBufferMeters = this.config.get<number>('invalidBboxSeedBufferMeters');
+    this.minInvalidBboxSeedBufferMeters = this.config.get<number>('minInvalidBboxSeedBufferMeters');
+    this.maxRetriesOnInvalidBbox = this.config.get<number>('maxRetriesOnInvalidBbox');
     this.abortController = new AbortController();
   }
 
@@ -97,14 +100,8 @@ export class MapproxySeed {
       await this.executeSeed(task, jobId, taskId);
       this.logger.info({ msg: `complete seed (type of ${task.mode}) for job of ${task.layerId}`, jobId, taskId });
     } catch (err) {
-      if (err instanceof Error && err.message.includes('mapproxy.grid.GridError: Invalid BBOX')) {
-        this.logger.warn(`Buffering invalid bbox by ${this.invalidBboxSeedBufferMeters} meters and retrying`);
-        const bufferedPolygon = buffer(task.geometry as Feature<Polygon>, this.invalidBboxSeedBufferMeters, { units: 'meters' });
-        if (bufferedPolygon !== undefined) {
-          const bufferedTask = { ...task, geometry: bufferedPolygon };
-          await this.writeGeojsonTxtFile(this.geometryCoverageFilePath, JSON.stringify(bufferedPolygon), jobId, taskId);
-          await this.executeSeed(bufferedTask, jobId, taskId);
-        }
+      if (err instanceof Error && err.message.match(/mapproxy.grid.GridError: Invalid BBOX/)) {
+        await this.handleInvalidBboxError(task, jobId, taskId);
       } else {
         this.logger.error({ msg: `failed seed for job (type of ${task.mode}) of ${task.layerId}`, jobId, taskId, err });
         throw new Error(`failed seed for job of ${task.layerId} with reason: ${(err as Error).message}`);
@@ -394,6 +391,43 @@ export class MapproxySeed {
     } catch (err) {
       this.logger.error({ msg: `failed to generate tiles`, jobId, taskId, err });
       throw err;
+    }
+  }
+
+  private async handleInvalidBboxError(task: ISeed, jobId: string, taskId: string, attempt = 1): Promise<void> {
+    if (attempt > this.maxRetriesOnInvalidBbox) {
+      this.logger.error({
+        msg: `Exceeded max retries (${this.maxRetriesOnInvalidBbox}) for invalid bbox error, aborting seed operation for task ${taskId}`,
+        taskId,
+        layerId: task.layerId,
+        jobId,
+        maxRetries: this.maxRetriesOnInvalidBbox,
+      });
+      throw new ExceededMaxRetriesError(`Exceeded max retries (${this.maxRetriesOnInvalidBbox}) for invalid bbox error on task ${taskId}`);
+    }
+
+    const currentBuffer = this.minInvalidBboxSeedBufferMeters * attempt;
+
+    this.logger.warn({
+      msg: `Invalid bbox detected for geometry, applying ${currentBuffer}m buffer and retrying seed operation`,
+      taskId,
+      layerId: task.layerId,
+      bufferMeters: this.minInvalidBboxSeedBufferMeters,
+      originalGeometry: task.geometry,
+      errorType: 'invalid_bbox',
+    });
+
+    try {
+      const bufferedPolygon = buffer(task.geometry as Feature<Polygon>, currentBuffer, { units: 'meters' });
+      if (bufferedPolygon !== undefined) {
+        const bufferedTask = { ...task, geometry: bufferedPolygon };
+        await this.writeGeojsonTxtFile(this.geometryCoverageFilePath, JSON.stringify(bufferedPolygon), jobId, taskId);
+        await this.executeSeed(bufferedTask, jobId, taskId);
+      }
+    } catch (err) {
+      if (err instanceof Error && err.message.match(/mapproxy.grid.GridError: Invalid BBOX/)) {
+        await this.handleInvalidBboxError(task, jobId, taskId, attempt + 1);
+      }
     }
   }
 }

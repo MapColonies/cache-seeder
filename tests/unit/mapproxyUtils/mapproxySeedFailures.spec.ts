@@ -42,7 +42,7 @@ describe('#MapproxySeed', () => {
   afterEach(function () {
     clearConfig();
     resetContainer();
-    jest.resetAllMocks();
+    jest.restoreAllMocks();
     nock.cleanAll();
   });
 

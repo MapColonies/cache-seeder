@@ -52,9 +52,11 @@
     "seedProgressFileDir": "/mapproxy/mapproxy_seed_progress"
   },
   "redis": {
-    "username": "",
-    "password": "",
-    "tls": false
+    "auth": {
+      "username": "",
+      "password": "",
+      "tls": false
+    }
   },
   "servicesUrl": {
     "jobTracker": "http://localhost:8090"
@@ -64,5 +66,6 @@
   "gracefulReloadMaxSeconds": 300,
   "refreshBeforeYearsOffset": 1,
   "mapproxy_cmd_command": "mapproxy-seed",
-  "invalidBboxSeedBufferMeters": 600
+  "minInvalidBboxSeedBufferMeters": 200,
+  "maxRetriesOnInvalidBbox": 5
 }

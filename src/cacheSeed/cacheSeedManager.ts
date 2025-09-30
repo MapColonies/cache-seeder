@@ -12,14 +12,15 @@ import { QueueClient } from '../clients/queueClient';
 import { CacheType, SeedMode } from '../common/enums';
 import { getSpanLinkOption } from '../common/tracing';
 import { JobTrackerClient } from '../clients/jobTrackerClient';
+import { ExceededMaxRetriesError } from '../common/errors';
 
 @singleton()
 export class CacheSeedManager {
   private readonly seedAttempts: number;
+  private readonly jobType: string;
   private readonly taskType: string;
   private readonly msToSeconds: number;
   private readonly gracefulReloadMaxSeconds: number;
-  private readonly invalidBboxSeedBufferMeters: number;
 
   public constructor(
     @inject(SERVICES.LOGGER) private readonly logger: Logger,
@@ -30,15 +31,15 @@ export class CacheSeedManager {
     private readonly jobTrackerClient: JobTrackerClient
   ) {
     this.seedAttempts = this.config.get<number>('seedAttempts');
+    this.jobType = this.config.get<string>('queue.jobType');
     this.taskType = this.config.get<string>('queue.tilesTaskType');
     this.gracefulReloadMaxSeconds = this.config.get<number>('gracefulReloadMaxSeconds');
-    this.invalidBboxSeedBufferMeters = this.config.get<number>('invalidBboxSeedBufferMeters');
     this.msToSeconds = 1000;
   }
 
   public async handleCacheSeedTask(): Promise<boolean> {
     this.logger.debug('Running search for seed jobs');
-    const tilesTask = await this.queueClient.queueHandlerForTileSeedingTasks.dequeue<ITaskParams>(this.taskType);
+    const tilesTask = await this.queueClient.queueHandlerForTileSeedingTasks.dequeue<ITaskParams>(this.jobType, this.taskType);
     if (!tilesTask) {
       return Boolean(tilesTask);
     }
@@ -165,9 +166,15 @@ export class CacheSeedManager {
       await this.queueClient.queueHandlerForTileSeedingTasks.ack(jobId, taskId);
       await this.jobTrackerClient.notify(taskId);
     } catch (err) {
-      const errorObj = { jobId, taskId, msg: 'Reject task and increase attempts', err };
-      this.logger.error(errorObj);
-      await this.queueClient.queueHandlerForTileSeedingTasks.reject(jobId, taskId, true, (err as Error).message);
+      if (err instanceof ExceededMaxRetriesError) {
+        const errorObj = { jobId, taskId, msg: err.message, err };
+        this.logger.error(errorObj);
+        await this.queueClient.queueHandlerForTileSeedingTasks.reject(jobId, taskId, false, err.message);
+      } else {
+        const errorObj = { jobId, taskId, msg: 'Reject task and increase attempts', err };
+        this.logger.error(errorObj);
+        await this.queueClient.queueHandlerForTileSeedingTasks.reject(jobId, taskId, true, (err as Error).message);
+      }
       trace.getActiveSpan()?.recordException(err as Error);
       return false;
     }
