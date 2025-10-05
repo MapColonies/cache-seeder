@@ -95,5 +95,9 @@
     "supertest": "^6.3.3",
     "ts-jest": "^29.0.5",
     "typescript": "^5.3.3"
+  },
+  "//OverrideComment": "https://github.com/Turfjs/turf/issues/2922",
+  "overrides": {
+    "concaveman": "1.2.1"
   }
 }
