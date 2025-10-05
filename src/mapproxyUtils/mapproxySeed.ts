@@ -28,8 +28,8 @@ export class MapproxySeed {
   private readonly yearsOffset: number;
   private readonly abortController: AbortController;
   private readonly mapproxyCmdCommand: string;
-  private readonly minInvalidBboxSeedBufferMeters: number;
-  private readonly maxRetriesOnInvalidBbox: number;
+  private readonly invalidBboxInitialBufferMeters: number;
+  private readonly invalidBboxRetryLimit: number;
 
   public constructor(
     @inject(SERVICES.LOGGER) private readonly logger: Logger,
@@ -44,8 +44,8 @@ export class MapproxySeed {
     this.mapproxySeedProgressDir = this.config.get<string>('mapproxy.seedProgressFileDir');
     this.mapproxyCmdCommand = this.config.get<string>('mapproxy_cmd_command');
     this.yearsOffset = this.config.get<number>('refreshBeforeYearsOffset');
-    this.minInvalidBboxSeedBufferMeters = this.config.get<number>('minInvalidBboxSeedBufferMeters');
-    this.maxRetriesOnInvalidBbox = this.config.get<number>('maxRetriesOnInvalidBbox');
+    this.invalidBboxInitialBufferMeters = this.config.get<number>('invalidBboxInitialBufferMeters');
+    this.invalidBboxRetryLimit = this.config.get<number>('invalidBboxRetryLimit');
     this.abortController = new AbortController();
   }
 
@@ -395,24 +395,24 @@ export class MapproxySeed {
   }
 
   private async handleInvalidBboxError(task: ISeed, jobId: string, taskId: string, attempt = 1): Promise<void> {
-    if (attempt > this.maxRetriesOnInvalidBbox) {
+    if (attempt > this.invalidBboxRetryLimit) {
       this.logger.error({
-        msg: `Exceeded max retries (${this.maxRetriesOnInvalidBbox}) for invalid bbox error, aborting seed operation for task ${taskId}`,
+        msg: `Exceeded max retries (${this.invalidBboxRetryLimit}) for invalid bbox error, aborting seed operation for task ${taskId}`,
         taskId,
         layerId: task.layerId,
         jobId,
-        maxRetries: this.maxRetriesOnInvalidBbox,
+        maxRetries: this.invalidBboxRetryLimit,
       });
-      throw new ExceededMaxRetriesError(`Exceeded max retries (${this.maxRetriesOnInvalidBbox}) for invalid bbox error on task ${taskId}`);
+      throw new ExceededMaxRetriesError(`Exceeded max retries (${this.invalidBboxRetryLimit}) for invalid bbox error on task ${taskId}`);
     }
 
-    const currentBuffer = this.minInvalidBboxSeedBufferMeters * attempt;
+    const currentBuffer = this.invalidBboxInitialBufferMeters * attempt;
 
     this.logger.warn({
       msg: `Invalid bbox detected for geometry, applying ${currentBuffer}m buffer and retrying seed operation`,
       taskId,
       layerId: task.layerId,
-      bufferMeters: this.minInvalidBboxSeedBufferMeters,
+      bufferMeters: this.invalidBboxInitialBufferMeters,
       originalGeometry: task.geometry,
       errorType: 'invalid_bbox',
     });

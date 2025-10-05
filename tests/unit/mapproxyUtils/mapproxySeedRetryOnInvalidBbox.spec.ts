@@ -101,7 +101,7 @@ describe('#MapproxySeed', () => {
       const action = async () => mapproxySeed.runSeed(task.parameters.seedTasks[0], task.jobId, task.id);
       await expect(action).rejects.toThrow(ExceededMaxRetriesError);
 
-      const maxRetries = configMock.get<number>('maxRetriesOnInvalidBbox');
+      const maxRetries = configMock.get<number>('invalidBboxRetryLimit');
       expect(writeMapproxyYamlSpy).toHaveBeenCalledTimes(1);
       expect(createSeedYamlFileSpy).toHaveBeenCalledTimes(1);
       expect(writeGeojsonTxtFileSpy).toHaveBeenCalledTimes(maxRetries + 1);

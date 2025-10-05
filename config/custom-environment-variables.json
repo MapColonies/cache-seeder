@@ -58,16 +58,6 @@
     "seedYamlDir": "SEED_YAML_DIR",
     "geometryTxtFile": "GEOMETRY_TXT_FILE"
   },
-  "redis": {
-    "auth": {
-      "username": "REDIS_USERNAME",
-      "password": "REDIS_PASSWORD",
-      "tls": {
-        "__name": "REDIS_TLS",
-        "__format": "boolean"
-      }
-    }
-  },
   "seedAttempts": {
     "__name": "SEED_ATTEMPTS",
     "__format": "number"
@@ -88,12 +78,12 @@
   "servicesUrl": {
     "jobTracker": "JOB_TRACKER_URL"
   },
-  "minInvalidBboxSeedBufferMeters": {
-    "__name": "MIN_INVALID_BBOX_SEED_BUFFER_METERS",
+  "invalidBboxInitialBufferMeters": {
+    "__name": "INVALID_BBOX_INITIAL_BUFFER_METERS",
     "__format": "number"
   },
-  "maxRetriesOnInvalidBbox": {
-    "__name": "MAX_RETRIES_ON_INVALID_BBOX",
+  "invalidBboxRetryLimit": {
+    "__name": "INVALID_BBOX_RETRY_LIMIT",
     "__format": "number"
   }
 }
