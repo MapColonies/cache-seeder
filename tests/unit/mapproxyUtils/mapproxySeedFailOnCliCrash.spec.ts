@@ -1,3 +1,5 @@
+/// <reference types="jest-extended" />
+
 import { readFileSync, promises as fsp } from 'node:fs';
 import jsLogger from '@map-colonies/js-logger';
 import nock from 'nock';
@@ -70,22 +72,22 @@ describe('#MapproxySeed', () => {
       };
       await expect(action).rejects.toThrow(/Shell error: spawn badCommand ENOENT/);
 
-      expect(writeMapproxyYamlSpy).toHaveBeenCalledTimes(1);
+      expect(writeMapproxyYamlSpy).toHaveBeenCalledOnce();
       expect(writeFileStub).toHaveBeenCalledTimes(3);
       expect(writeFileStub).toHaveBeenNthCalledWith(1, configMock.get('mapproxy.mapproxyYamlDir'), yamlContent, 'utf8');
-      expect(writeGeojsonTxtFileSpy).toHaveBeenCalledTimes(1);
+      expect(writeGeojsonTxtFileSpy).toHaveBeenCalledOnce();
       expect(writeFileStub).toHaveBeenNthCalledWith(
         2,
         configMock.get('mapproxy.geometryTxtFile'),
         JSON.stringify(task.parameters.seedTasks[0].geometry),
         'utf8'
       );
-      expect(createSeedYamlFileSpy).toHaveBeenCalledTimes(1);
+      expect(createSeedYamlFileSpy).toHaveBeenCalledOnce();
       expect(accessStub).toHaveBeenCalledTimes(2);
-      expect(getSeedSpy).toHaveBeenCalledTimes(1);
+      expect(getSeedSpy).toHaveBeenCalledOnce();
       expect(getCleanupSpy).not.toHaveBeenCalled();
       expect(writeFileStub).toHaveBeenNthCalledWith(3, configMock.get('mapproxy.seedYamlDir'), seedYamlContent);
-      expect(executeSeedSpy).toHaveBeenCalledTimes(1);
+      expect(executeSeedSpy).toHaveBeenCalledOnce();
       expect(seedProgressFuncSpy).not.toHaveBeenCalled();
       expect(bufferSpy).not.toHaveBeenCalled();
     });

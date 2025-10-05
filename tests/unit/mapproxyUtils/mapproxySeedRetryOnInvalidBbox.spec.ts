@@ -1,3 +1,5 @@
+/// <reference types="jest-extended" />
+
 import { readFileSync, promises as fsp } from 'node:fs';
 import jsLogger from '@map-colonies/js-logger';
 import nock from 'nock';
@@ -70,11 +72,11 @@ describe('#MapproxySeed', () => {
 
       await mapproxySeed.runSeed(task.parameters.seedTasks[0], task.jobId, task.id);
 
-      expect(writeMapproxyYamlSpy).toHaveBeenCalledTimes(1);
-      expect(createSeedYamlFileSpy).toHaveBeenCalledTimes(1);
+      expect(writeMapproxyYamlSpy).toHaveBeenCalledOnce();
+      expect(createSeedYamlFileSpy).toHaveBeenCalledOnce();
       expect(writeGeojsonTxtFileSpy).toHaveBeenCalledTimes(2);
       expect(executeSeedSpy).toHaveBeenCalledTimes(2);
-      expect(bufferSpy).toHaveBeenCalledTimes(1);
+      expect(bufferSpy).toHaveBeenCalledOnce();
       expect(nock.isDone()).toBeTruthy();
     });
 
@@ -102,8 +104,8 @@ describe('#MapproxySeed', () => {
       await expect(action).rejects.toThrow(ExceededMaxRetriesError);
 
       const maxRetries = configMock.get<number>('invalidBboxRetryLimit');
-      expect(writeMapproxyYamlSpy).toHaveBeenCalledTimes(1);
-      expect(createSeedYamlFileSpy).toHaveBeenCalledTimes(1);
+      expect(writeMapproxyYamlSpy).toHaveBeenCalledOnce();
+      expect(createSeedYamlFileSpy).toHaveBeenCalledOnce();
       expect(writeGeojsonTxtFileSpy).toHaveBeenCalledTimes(maxRetries + 1);
       expect(executeSeedSpy).toHaveBeenCalledTimes(maxRetries + 1);
       expect(bufferSpy).toHaveBeenCalledTimes(maxRetries);

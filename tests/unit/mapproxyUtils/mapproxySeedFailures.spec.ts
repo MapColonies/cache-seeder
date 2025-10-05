@@ -1,3 +1,5 @@
+/// <reference types="jest-extended" />
+
 import { readFileSync, promises as fsp } from 'node:fs';
 import jsLogger from '@map-colonies/js-logger';
 import nock from 'nock';
@@ -74,23 +76,23 @@ describe('#MapproxySeed', () => {
         };
 
         await expect(action).rejects.toThrow(`failed seed for job of test with reason: ${cmdSeedErrMsg}`);
-        expect(writeMapproxyYamlSpy).toHaveBeenCalledTimes(1);
+        expect(writeMapproxyYamlSpy).toHaveBeenCalledOnce();
         expect(writeFileStub).toHaveBeenCalledTimes(3);
         expect(writeFileStub).toHaveBeenNthCalledWith(1, configMock.get('mapproxy.mapproxyYamlDir'), yamlContent, 'utf8');
-        expect(writeGeojsonTxtFileSpy).toHaveBeenCalledTimes(1);
+        expect(writeGeojsonTxtFileSpy).toHaveBeenCalledOnce();
         expect(writeFileStub).toHaveBeenNthCalledWith(
           2,
           configMock.get('mapproxy.geometryTxtFile'),
           JSON.stringify(task.parameters.seedTasks[0].geometry),
           'utf8'
         );
-        expect(createSeedYamlFileSpy).toHaveBeenCalledTimes(1);
+        expect(createSeedYamlFileSpy).toHaveBeenCalledOnce();
         expect(accessStub).toHaveBeenCalledTimes(2);
-        expect(getSeedSpy).toHaveBeenCalledTimes(1);
+        expect(getSeedSpy).toHaveBeenCalledOnce();
         expect(getCleanupSpy).toHaveBeenCalledTimes(0);
         expect(writeFileStub).toHaveBeenNthCalledWith(3, configMock.get('mapproxy.seedYamlDir'), seedYamlContent);
-        expect(executeSeedSpy).toHaveBeenCalledTimes(1);
-        expect(runCommandStub).toHaveBeenCalledTimes(1);
+        expect(executeSeedSpy).toHaveBeenCalledOnce();
+        expect(runCommandStub).toHaveBeenCalledOnce();
         expect(bufferSpy).not.toHaveBeenCalled();
         expect(runCommandStub).toHaveBeenCalledWith(
           configMock.get<string>('mapproxy_cmd_command'),
@@ -126,9 +128,9 @@ describe('#MapproxySeed', () => {
         };
 
         await expect(action).rejects.toThrow('failed seed for job of test with reason: Failed on generating mapproxy current yaml');
-        expect(writeMapproxyYamlSpy).toHaveBeenCalledTimes(1);
+        expect(writeMapproxyYamlSpy).toHaveBeenCalledOnce();
         expect(writeFileStub).toHaveBeenNthCalledWith(1, configMock.get('mapproxy.mapproxyYamlDir'), yamlContent, 'utf8');
-        expect(writeFileStub).toHaveBeenCalledTimes(1);
+        expect(writeFileStub).toHaveBeenCalledOnce();
       });
 
       it('Failed on run main seed function (writeGeojsonTxtFile)', async function () {
@@ -148,10 +150,10 @@ describe('#MapproxySeed', () => {
         };
 
         await expect(action).rejects.toThrow('failed seed for job of test with reason: Failed on generating geometry coverage file');
-        expect(writeMapproxyYamlSpy).toHaveBeenCalledTimes(1);
+        expect(writeMapproxyYamlSpy).toHaveBeenCalledOnce();
         expect(writeFileStub).toHaveBeenCalledTimes(2);
         expect(writeFileStub).toHaveBeenNthCalledWith(1, configMock.get('mapproxy.mapproxyYamlDir'), yamlContent, 'utf8');
-        expect(writeGeojsonTxtFileSpy).toHaveBeenCalledTimes(1);
+        expect(writeGeojsonTxtFileSpy).toHaveBeenCalledOnce();
         expect(writeFileStub).toHaveBeenNthCalledWith(
           2,
           configMock.get('mapproxy.geometryTxtFile'),
@@ -223,18 +225,18 @@ describe('#MapproxySeed', () => {
           'failed seed for job of test with reason: unable to create seed.yaml file: Mapproxy yaml configuration file not exists: /mapproxy/mapproxy.yaml'
         );
 
-        expect(writeMapproxyYamlSpy).toHaveBeenCalledTimes(1);
+        expect(writeMapproxyYamlSpy).toHaveBeenCalledOnce();
         expect(writeFileStub).toHaveBeenCalledTimes(2);
         expect(writeFileStub).toHaveBeenNthCalledWith(1, configMock.get('mapproxy.mapproxyYamlDir'), yamlContent, 'utf8');
-        expect(writeGeojsonTxtFileSpy).toHaveBeenCalledTimes(1);
+        expect(writeGeojsonTxtFileSpy).toHaveBeenCalledOnce();
         expect(writeFileStub).toHaveBeenNthCalledWith(
           2,
           configMock.get('mapproxy.geometryTxtFile'),
           JSON.stringify(task.parameters.seedTasks[0].geometry),
           'utf8'
         );
-        expect(createSeedYamlFileSpy).toHaveBeenCalledTimes(1);
-        expect(accessStub).toHaveBeenCalledTimes(1);
+        expect(createSeedYamlFileSpy).toHaveBeenCalledOnce();
+        expect(accessStub).toHaveBeenCalledOnce();
         expect(bufferSpy).not.toHaveBeenCalled();
       });
 
@@ -281,17 +283,17 @@ describe('#MapproxySeed', () => {
           `failed seed for job of test with reason: unable to create seed.yaml file: geometry coverage json file not exists: /mapproxy/coverage.json`
         );
 
-        expect(writeMapproxyYamlSpy).toHaveBeenCalledTimes(1);
+        expect(writeMapproxyYamlSpy).toHaveBeenCalledOnce();
         expect(writeFileStub).toHaveBeenCalledTimes(2);
         expect(writeFileStub).toHaveBeenNthCalledWith(1, configMock.get('mapproxy.mapproxyYamlDir'), yamlContent, 'utf8');
-        expect(writeGeojsonTxtFileSpy).toHaveBeenCalledTimes(1);
+        expect(writeGeojsonTxtFileSpy).toHaveBeenCalledOnce();
         expect(writeFileStub).toHaveBeenNthCalledWith(
           2,
           configMock.get('mapproxy.geometryTxtFile'),
           JSON.stringify(task.parameters.seedTasks[0].geometry),
           'utf8'
         );
-        expect(createSeedYamlFileSpy).toHaveBeenCalledTimes(1);
+        expect(createSeedYamlFileSpy).toHaveBeenCalledOnce();
         expect(accessStub).toHaveBeenCalledTimes(2);
         expect(bufferSpy).not.toHaveBeenCalled();
       });
