@@ -403,7 +403,7 @@ export class MapproxySeed {
         jobId,
         maxRetries: this.invalidBboxRetryLimit,
       });
-      throw new ExceededMaxRetriesError(`Exceeded max retries (${this.invalidBboxRetryLimit}) for invalid bbox error on task ${taskId}`);
+      throw new ExceededMaxRetriesError(`Exceeded max retries (${this.invalidBboxRetryLimit}) for invalid bbox error`);
     }
 
     const currentBuffer = this.invalidBboxInitialBufferMeters * attempt;
