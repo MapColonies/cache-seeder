@@ -30,6 +30,7 @@ export class MapproxySeed {
   private readonly mapproxyCmdCommand: string;
   private readonly invalidBboxInitialBufferMeters: number;
   private readonly invalidBboxRetryLimit: number;
+  private readonly invalidBboxErrorPattern = /mapproxy.grid.GridError: Invalid BBOX/;
 
   public constructor(
     @inject(SERVICES.LOGGER) private readonly logger: Logger,
@@ -100,7 +101,7 @@ export class MapproxySeed {
       await this.executeSeed(task, jobId, taskId);
       this.logger.info({ msg: `complete seed (type of ${task.mode}) for job of ${task.layerId}`, jobId, taskId });
     } catch (err) {
-      if (err instanceof Error && err.message.match(/mapproxy.grid.GridError: Invalid BBOX/)) {
+      if (err instanceof Error && err.message.match(this.invalidBboxErrorPattern)) {
         await this.handleInvalidBboxError(task, jobId, taskId);
       } else {
         this.logger.error({ msg: `failed seed for job (type of ${task.mode}) of ${task.layerId}`, jobId, taskId, err });
@@ -425,7 +426,7 @@ export class MapproxySeed {
         await this.executeSeed(bufferedTask, jobId, taskId);
       }
     } catch (err) {
-      if (err instanceof Error && err.message.match(/mapproxy.grid.GridError: Invalid BBOX/)) {
+      if (err instanceof Error && err.message.match(this.invalidBboxErrorPattern)) {
         await this.handleInvalidBboxError(task, jobId, taskId, attempt + 1);
       }
     }

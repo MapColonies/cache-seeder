@@ -1,3 +1,5 @@
+/// <reference types="jest-extended" />
+
 import { setTimeout as setTimeoutPromises } from 'timers/promises';
 import jsLogger from '@map-colonies/js-logger';
 import nock from 'nock';
@@ -83,14 +85,14 @@ describe('CacheSeedManager', () => {
         await cacheSeedManager.handleCacheSeedTask();
       };
       await expect(action()).resolves.not.toThrow();
-      expect(dequeueStub).toHaveBeenCalledTimes(1);
-      expect(runTaskSpy).toHaveBeenCalledTimes(1);
-      expect(isValidCacheTypeSpy).toHaveBeenCalledTimes(1);
+      expect(dequeueStub).toHaveBeenCalledOnce();
+      expect(runTaskSpy).toHaveBeenCalledOnce();
+      expect(isValidCacheTypeSpy).toHaveBeenCalledOnce();
       expect(await isValidCacheTypeSpy.mock.results[0].value).toBe(true);
       expect(runSeedSpy).toHaveBeenCalledTimes(2);
       expect(runSeedSpy).toHaveBeenNthCalledWith(1, task.parameters.seedTasks[0], task.jobId, task.id);
       expect(runSeedSpy).toHaveBeenNthCalledWith(2, task.parameters.seedTasks[1], task.jobId, task.id);
-      expect(ackStubForTileTasks).toHaveBeenCalledTimes(1);
+      expect(ackStubForTileTasks).toHaveBeenCalledOnce();
     });
 
     it('No Task to run', async function () {
@@ -104,7 +106,7 @@ describe('CacheSeedManager', () => {
       // action
       await cacheSeedManager.handleCacheSeedTask();
 
-      expect(dequeueStub).toHaveBeenCalledTimes(1);
+      expect(dequeueStub).toHaveBeenCalledOnce();
       expect(ackStubForTileTasks).toHaveBeenCalledTimes(0);
     });
 
@@ -124,9 +126,9 @@ describe('CacheSeedManager', () => {
         await cacheSeedManager.handleCacheSeedTask();
       };
       await expect(action).rejects.toThrow(new Error('test failure'));
-      expect(dequeueStub).toHaveBeenCalledTimes(1);
-      expect(runTaskSpy).toHaveBeenCalledTimes(1);
-      expect(rejectStubForTileTasks).toHaveBeenCalledTimes(1);
+      expect(dequeueStub).toHaveBeenCalledOnce();
+      expect(runTaskSpy).toHaveBeenCalledOnce();
+      expect(rejectStubForTileTasks).toHaveBeenCalledOnce();
       expect(rejectStubForTileTasks).toHaveBeenCalledWith(task.jobId, task.id, true, 'error on running seed');
     });
 
@@ -141,8 +143,8 @@ describe('CacheSeedManager', () => {
       // action
       await cacheSeedManager.handleCacheSeedTask();
 
-      expect(dequeueStub).toHaveBeenCalledTimes(1);
-      expect(rejectStubForTileTasks).toHaveBeenCalledTimes(1);
+      expect(dequeueStub).toHaveBeenCalledOnce();
+      expect(rejectStubForTileTasks).toHaveBeenCalledOnce();
       expect(rejectStubForTileTasks).toHaveBeenCalledWith(task.jobId, task.id, false);
     });
 
@@ -162,11 +164,11 @@ describe('CacheSeedManager', () => {
       };
 
       await expect(action()).resolves.not.toThrow();
-      expect(dequeueStub).toHaveBeenCalledTimes(1);
-      expect(isValidCacheTypeSpy).toHaveBeenCalledTimes(1);
+      expect(dequeueStub).toHaveBeenCalledOnce();
+      expect(isValidCacheTypeSpy).toHaveBeenCalledOnce();
       expect(await isValidCacheTypeSpy.mock.results[0].value).toBeFalsy();
       expect(runTaskSpy).toHaveBeenCalledTimes(0);
-      expect(rejectStubForTileTasks).toHaveBeenCalledTimes(1);
+      expect(rejectStubForTileTasks).toHaveBeenCalledOnce();
       expect(rejectStubForTileTasks).toHaveBeenCalledWith(task.jobId, task.id, false, 'Unsupported cache type NotSupportCacheSample');
     });
 
@@ -183,9 +185,9 @@ describe('CacheSeedManager', () => {
       const action = async () => cacheSeedManager.handleCacheSeedTask();
 
       await expect(action()).resolves.not.toThrow();
-      expect(dequeueStub).toHaveBeenCalledTimes(1);
-      expect(runTaskSpy).toHaveBeenCalledTimes(1);
-      expect(rejectStubForTileTasks).toHaveBeenCalledTimes(1);
+      expect(dequeueStub).toHaveBeenCalledOnce();
+      expect(runTaskSpy).toHaveBeenCalledOnce();
+      expect(rejectStubForTileTasks).toHaveBeenCalledOnce();
       expect(rejectStubForTileTasks).toHaveBeenCalledWith(
         task.jobId,
         task.id,
@@ -208,9 +210,9 @@ describe('CacheSeedManager', () => {
       const action = async () => cacheSeedManager.handleCacheSeedTask();
 
       await expect(action()).resolves.not.toThrow();
-      expect(dequeueStub).toHaveBeenCalledTimes(1);
-      expect(runTaskSpy).toHaveBeenCalledTimes(1);
-      expect(rejectStubForTileTasks).toHaveBeenCalledTimes(1);
+      expect(dequeueStub).toHaveBeenCalledOnce();
+      expect(runTaskSpy).toHaveBeenCalledOnce();
+      expect(rejectStubForTileTasks).toHaveBeenCalledOnce();
       expect(rejectStubForTileTasks).toHaveBeenCalledWith(task.jobId, task.id, false, sampleError.message);
     });
 
@@ -222,7 +224,7 @@ describe('CacheSeedManager', () => {
         const action = async () => cacheSeedManager.delay(0.001);
 
         await expect(action()).resolves.not.toThrow();
-        expect(setTimeoutPromises).toHaveBeenCalledTimes(1);
+        expect(setTimeoutPromises).toHaveBeenCalledOnce();
         expect(setTimeoutPromises).toHaveBeenCalledWith(1);
       });
     });
