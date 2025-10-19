@@ -420,14 +420,20 @@ export class MapproxySeed {
 
     try {
       const bufferedPolygon = buffer(task.geometry as Feature<Polygon>, currentBuffer, { units: 'meters' });
-      if (bufferedPolygon !== undefined) {
-        const bufferedTask = { ...task, geometry: bufferedPolygon };
-        await this.writeGeojsonTxtFile(this.geometryCoverageFilePath, JSON.stringify(bufferedPolygon), jobId, taskId);
-        await this.executeSeed(bufferedTask, jobId, taskId);
+
+      if (bufferedPolygon === undefined) {
+        this.logger.error(`Failed to apply buffer to geometry for task ${taskId}, aborting seed operation`);
+        throw new Error('Buffer operation resulted in undefined geometry');
       }
+
+      const bufferedTask = { ...task, geometry: bufferedPolygon };
+      await this.writeGeojsonTxtFile(this.geometryCoverageFilePath, JSON.stringify(bufferedPolygon), jobId, taskId);
+      await this.executeSeed(bufferedTask, jobId, taskId);
     } catch (err) {
       if (err instanceof Error && err.message.match(this.invalidBboxErrorPattern)) {
         await this.handleInvalidBboxError(task, jobId, taskId, attempt + 1);
+      } else {
+        throw err;
       }
     }
   }
