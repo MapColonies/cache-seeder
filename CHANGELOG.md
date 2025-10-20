@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [2.1.1](https://github.com/MapColonies/cache-seeder/compare/v2.1.0...v2.1.1) (2025-10-20)
+
+
+### Bug Fixes
+
+* add buffer to seeds polygons that fails on invalid bbox ([#24](https://github.com/MapColonies/cache-seeder/issues/24)) ([484c2f4](https://github.com/MapColonies/cache-seeder/commit/484c2f4bfdfbc5d444836fc99d4908f5efb147b0))
+
 ## [2.1.0](https://github.com/MapColonies/cache-seeder/compare/v2.0.0...v2.1.0) (2025-07-13)
 
 
