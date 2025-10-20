@@ -22,6 +22,11 @@ describe('#MapproxySeed', () => {
   const jobManagerTestUrl = 'http://someJobManager';
   const mapproxyTestUrl = 'http://test';
   let writeFileStub: jest.SpyInstance;
+  let bufferSpy: jest.SpyInstance;
+  let writeMapproxyYamlSpy: jest.SpyInstance;
+  let createSeedYamlFileSpy: jest.SpyInstance;
+  let writeGeojsonTxtFileSpy: jest.SpyInstance;
+  let executeSeedSpy: jest.SpyInstance;
 
   beforeEach(function () {
     initConfig();
@@ -38,6 +43,12 @@ describe('#MapproxySeed', () => {
     });
 
     mapproxySeed = new MapproxySeed(jsLogger({ enabled: false }), configMock, tracerMock, mapproxyConfigClient);
+    bufferSpy = jest.spyOn(turfBufferModule, 'default');
+    writeFileStub = jest.spyOn(fsp, 'writeFile');
+    writeMapproxyYamlSpy = jest.spyOn(MapproxySeed.prototype as unknown as { writeMapproxyYaml: jest.Mock }, 'writeMapproxyYaml');
+    createSeedYamlFileSpy = jest.spyOn(MapproxySeed.prototype as unknown as { createSeedYamlFile: jest.Mock }, 'createSeedYamlFile');
+    writeGeojsonTxtFileSpy = jest.spyOn(MapproxySeed.prototype as unknown as { writeGeojsonTxtFile: jest.Mock }, 'writeGeojsonTxtFile');
+    executeSeedSpy = jest.spyOn(MapproxySeed.prototype as unknown as { executeSeed: jest.Mock }, 'executeSeed');
   });
 
   afterEach(function () {
@@ -54,21 +65,13 @@ describe('#MapproxySeed', () => {
       const mockYamlFile = 'tests/mockData/mockConfig.yaml';
       const yamlContent = readFileSync(mockYamlFile, { encoding: 'utf8' });
       nock(mapproxyTestUrl).get(`/config`).reply(200, yamlContent);
-      const writeMapproxyYamlSpy = jest
-        .spyOn(MapproxySeed.prototype as unknown as { writeMapproxyYaml: jest.Mock }, 'writeMapproxyYaml')
-        .mockImplementation(undefined);
-      const createSeedYamlFileSpy = jest
-        .spyOn(MapproxySeed.prototype as unknown as { createSeedYamlFile: jest.Mock }, 'createSeedYamlFile')
-        .mockImplementation(undefined);
-      const writeGeojsonTxtFileSpy = jest
-        .spyOn(MapproxySeed.prototype as unknown as { writeGeojsonTxtFile: jest.Mock }, 'writeGeojsonTxtFile')
-        .mockImplementation(undefined);
-      const executeSeedSpy = jest
-        .spyOn(MapproxySeed.prototype as unknown as { executeSeed: jest.Mock }, 'executeSeed')
+      writeMapproxyYamlSpy.mockImplementation(undefined);
+      createSeedYamlFileSpy.mockImplementation(undefined);
+      writeGeojsonTxtFileSpy.mockImplementation(undefined);
+      executeSeedSpy
         .mockRejectedValueOnce(new Error('Command failed with error [mapproxy.grid.GridError: Invalid BBOX]'))
         .mockResolvedValueOnce(undefined);
-      writeFileStub = jest.spyOn(fsp, 'writeFile').mockImplementation(undefined);
-      const bufferSpy = jest.spyOn(turfBufferModule, 'default');
+      writeFileStub.mockImplementation(undefined);
 
       await mapproxySeed.runSeed(task.parameters.seedTasks[0], task.jobId, task.id);
 
@@ -85,20 +88,11 @@ describe('#MapproxySeed', () => {
       const mockYamlFile = 'tests/mockData/mockConfig.yaml';
       const yamlContent = readFileSync(mockYamlFile, { encoding: 'utf8' });
       nock(mapproxyTestUrl).get(`/config`).reply(200, yamlContent);
-      const writeMapproxyYamlSpy = jest
-        .spyOn(MapproxySeed.prototype as unknown as { writeMapproxyYaml: jest.Mock }, 'writeMapproxyYaml')
-        .mockImplementation(undefined);
-      const createSeedYamlFileSpy = jest
-        .spyOn(MapproxySeed.prototype as unknown as { createSeedYamlFile: jest.Mock }, 'createSeedYamlFile')
-        .mockImplementation(undefined);
-      const writeGeojsonTxtFileSpy = jest
-        .spyOn(MapproxySeed.prototype as unknown as { writeGeojsonTxtFile: jest.Mock }, 'writeGeojsonTxtFile')
-        .mockImplementation(undefined);
-      const executeSeedSpy = jest
-        .spyOn(MapproxySeed.prototype as unknown as { executeSeed: jest.Mock }, 'executeSeed')
-        .mockRejectedValue(new Error('Command failed with error [mapproxy.grid.GridError: Invalid BBOX]'));
-      writeFileStub = jest.spyOn(fsp, 'writeFile').mockImplementation(undefined);
-      const bufferSpy = jest.spyOn(turfBufferModule, 'default');
+      writeMapproxyYamlSpy.mockImplementation(undefined);
+      createSeedYamlFileSpy.mockImplementation(undefined);
+      writeGeojsonTxtFileSpy.mockImplementation(undefined);
+      executeSeedSpy.mockRejectedValue(new Error('Command failed with error [mapproxy.grid.GridError: Invalid BBOX]'));
+      writeFileStub.mockImplementation(undefined);
 
       const action = async () => mapproxySeed.runSeed(task.parameters.seedTasks[0], task.jobId, task.id);
       await expect(action).rejects.toThrow(ExceededMaxRetriesError);
@@ -117,20 +111,11 @@ describe('#MapproxySeed', () => {
       const mockYamlFile = 'tests/mockData/mockConfig.yaml';
       const yamlContent = readFileSync(mockYamlFile, { encoding: 'utf8' });
       nock(mapproxyTestUrl).get(`/config`).reply(200, yamlContent);
-      const writeMapproxyYamlSpy = jest
-        .spyOn(MapproxySeed.prototype as unknown as { writeMapproxyYaml: jest.Mock }, 'writeMapproxyYaml')
-        .mockImplementation(undefined);
-      const createSeedYamlFileSpy = jest
-        .spyOn(MapproxySeed.prototype as unknown as { createSeedYamlFile: jest.Mock }, 'createSeedYamlFile')
-        .mockImplementation(undefined);
-      const writeGeojsonTxtFileSpy = jest
-        .spyOn(MapproxySeed.prototype as unknown as { writeGeojsonTxtFile: jest.Mock }, 'writeGeojsonTxtFile')
-        .mockImplementation(undefined);
-      const executeSeedSpy = jest
-        .spyOn(MapproxySeed.prototype as unknown as { executeSeed: jest.Mock }, 'executeSeed')
-        .mockRejectedValue(new Error('Command failed with error [mapproxy.grid.GridError: Invalid BBOX]'));
-      writeFileStub = jest.spyOn(fsp, 'writeFile').mockImplementation(undefined);
-      const bufferSpy = jest.spyOn(turfBufferModule, 'default').mockReturnValue(undefined);
+      writeMapproxyYamlSpy.mockImplementation(undefined);
+      createSeedYamlFileSpy.mockImplementation(undefined);
+      writeGeojsonTxtFileSpy.mockImplementation(undefined);
+      executeSeedSpy.mockRejectedValue(new Error('Command failed with error [mapproxy.grid.GridError: Invalid BBOX]'));
+      bufferSpy.mockReturnValue(undefined);
 
       const action = async () => mapproxySeed.runSeed(task.parameters.seedTasks[0], task.jobId, task.id);
       await expect(action).rejects.toThrow('Buffer operation resulted in undefined geometry');
