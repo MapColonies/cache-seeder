@@ -77,5 +77,13 @@
   "mapproxy_cmd_command": "MAPPROXY_CMD_COMMAND",
   "servicesUrl": {
     "jobTracker": "JOB_TRACKER_URL"
+  },
+  "invalidBboxInitialBufferMeters": {
+    "__name": "INVALID_BBOX_INITIAL_BUFFER_METERS",
+    "__format": "number"
+  },
+  "invalidBboxRetryLimit": {
+    "__name": "INVALID_BBOX_RETRY_LIMIT",
+    "__format": "number"
   }
 }

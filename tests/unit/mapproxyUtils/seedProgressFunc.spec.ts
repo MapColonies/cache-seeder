@@ -18,6 +18,7 @@ describe('#SeedProgressFunction', () => {
       override: [...getContainerConfig()],
       useChild: false,
     });
+    mapproxyConfigClient = new MapproxyConfigClient(configMock, jsLogger({ enabled: false }), tracerMock);
     mapproxySeed = new MapproxySeed(jsLogger({ enabled: false }), configMock, tracerMock, mapproxyConfigClient);
   });
 

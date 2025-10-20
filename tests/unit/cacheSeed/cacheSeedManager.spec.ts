@@ -1,3 +1,5 @@
+/// <reference types="jest-extended" />
+
 import { setTimeout as setTimeoutPromises } from 'timers/promises';
 import jsLogger from '@map-colonies/js-logger';
 import nock from 'nock';
@@ -10,12 +12,12 @@ import { getTask, getJob } from '../../mockData/testStaticData';
 import { getContainerConfig, resetContainer } from '../testContainerConfig';
 import { QueueClient } from '../../../src/clients/queueClient';
 import { MapproxySeed } from '../../../src/mapproxyUtils/mapproxySeed';
-import { IMapProxyConfig, IQueueConfig } from '../../../src/common/interfaces';
-import { getConfigMock } from '../../mocks/clients/mapproxyConfig';
+import { IQueueConfig } from '../../../src/common/interfaces';
 import { MapproxyConfigClient } from '../../../src/clients/mapproxyConfig';
 import { tracing } from '../../../src/common/tracing';
 import { SERVICE_NAME } from '../../../src/common/constants';
 import { JobTrackerClient } from '../../../src/clients/jobTrackerClient';
+import { ExceededMaxRetriesError } from '../../../src/common/errors';
 
 tracing.start();
 const tracer = trace.getTracer(SERVICE_NAME);
@@ -59,7 +61,7 @@ describe('CacheSeedManager', () => {
   afterEach(function () {
     clearConfig();
     resetContainer();
-    jest.resetAllMocks();
+    jest.restoreAllMocks();
     nock.cleanAll();
   });
 
@@ -78,20 +80,19 @@ describe('CacheSeedManager', () => {
       const isValidCacheTypeSpy = jest.spyOn(CacheSeedManager.prototype as unknown as { isValidCacheType: jest.Mock }, 'isValidCacheType');
       const runSeedSpy = jest.spyOn(MapproxySeed.prototype, 'runSeed').mockResolvedValue(undefined);
 
-      getConfigMock.mockResolvedValue({} as unknown as IMapProxyConfig);
       // action
       const action = async () => {
         await cacheSeedManager.handleCacheSeedTask();
       };
       await expect(action()).resolves.not.toThrow();
-      expect(dequeueStub).toHaveBeenCalledTimes(1);
-      expect(runTaskSpy).toHaveBeenCalledTimes(1);
-      expect(isValidCacheTypeSpy).toHaveBeenCalledTimes(1);
+      expect(dequeueStub).toHaveBeenCalledOnce();
+      expect(runTaskSpy).toHaveBeenCalledOnce();
+      expect(isValidCacheTypeSpy).toHaveBeenCalledOnce();
       expect(await isValidCacheTypeSpy.mock.results[0].value).toBe(true);
       expect(runSeedSpy).toHaveBeenCalledTimes(2);
       expect(runSeedSpy).toHaveBeenNthCalledWith(1, task.parameters.seedTasks[0], task.jobId, task.id);
       expect(runSeedSpy).toHaveBeenNthCalledWith(2, task.parameters.seedTasks[1], task.jobId, task.id);
-      expect(ackStubForTileTasks).toHaveBeenCalledTimes(1);
+      expect(ackStubForTileTasks).toHaveBeenCalledOnce();
     });
 
     it('No Task to run', async function () {
@@ -102,11 +103,10 @@ describe('CacheSeedManager', () => {
       nock(jobManagerTestUrl).get(`/jobs/${task.jobId}?shouldReturnTasks=false`).reply(200, job); // internal job manager getJob request mocking
       ackStubForTileTasks = jest.spyOn(queueClient.queueHandlerForTileSeedingTasks, 'ack').mockImplementation(async () => Promise.resolve());
 
-      getConfigMock.mockResolvedValue({} as unknown as IMapProxyConfig);
       // action
       await cacheSeedManager.handleCacheSeedTask();
 
-      expect(dequeueStub).toHaveBeenCalledTimes(1);
+      expect(dequeueStub).toHaveBeenCalledOnce();
       expect(ackStubForTileTasks).toHaveBeenCalledTimes(0);
     });
 
@@ -121,16 +121,14 @@ describe('CacheSeedManager', () => {
       dequeueStub = jest.spyOn(queueClient.queueHandlerForTileSeedingTasks, 'dequeue').mockResolvedValue({ ...task, attempts: 4 });
       nock(jobManagerTestUrl).get(`/jobs/${task.jobId}?shouldReturnTasks=false`).reply(200, job); // internal job manager getJob request mocking
 
-      getConfigMock.mockResolvedValue({} as unknown as IMapProxyConfig);
-
       // action
       const action = async () => {
         await cacheSeedManager.handleCacheSeedTask();
       };
       await expect(action).rejects.toThrow(new Error('test failure'));
-      expect(dequeueStub).toHaveBeenCalledTimes(1);
-      expect(runTaskSpy).toHaveBeenCalledTimes(1);
-      expect(rejectStubForTileTasks).toHaveBeenCalledTimes(1);
+      expect(dequeueStub).toHaveBeenCalledOnce();
+      expect(runTaskSpy).toHaveBeenCalledOnce();
+      expect(rejectStubForTileTasks).toHaveBeenCalledOnce();
       expect(rejectStubForTileTasks).toHaveBeenCalledWith(task.jobId, task.id, true, 'error on running seed');
     });
 
@@ -141,12 +139,12 @@ describe('CacheSeedManager', () => {
       dequeueStub = jest.spyOn(queueClient.queueHandlerForTileSeedingTasks, 'dequeue').mockResolvedValue({ ...task, attempts: 6 });
       nock(jobManagerTestUrl).get(`/jobs/${task.jobId}?shouldReturnTasks=false`).reply(200, job); // internal job manager getJob request mocking
       nock(jobTrackerTestUrl).post(`/tasks/${task.id}/notify`).reply(200); // internal job tracker notify request mocking
-      getConfigMock.mockResolvedValue({} as unknown as IMapProxyConfig);
+
       // action
       await cacheSeedManager.handleCacheSeedTask();
 
-      expect(dequeueStub).toHaveBeenCalledTimes(1);
-      expect(rejectStubForTileTasks).toHaveBeenCalledTimes(1);
+      expect(dequeueStub).toHaveBeenCalledOnce();
+      expect(rejectStubForTileTasks).toHaveBeenCalledOnce();
       expect(rejectStubForTileTasks).toHaveBeenCalledWith(task.jobId, task.id, false);
     });
 
@@ -160,19 +158,17 @@ describe('CacheSeedManager', () => {
       const runTaskSpy = jest.spyOn(CacheSeedManager.prototype as unknown as { runTask: jest.Mock }, 'runTask');
       const isValidCacheTypeSpy = jest.spyOn(CacheSeedManager.prototype as unknown as { isValidCacheType: jest.Mock }, 'isValidCacheType');
 
-      getConfigMock.mockResolvedValue({} as unknown as IMapProxyConfig);
-
       // action
       const action = async () => {
         await cacheSeedManager.handleCacheSeedTask();
       };
 
       await expect(action()).resolves.not.toThrow();
-      expect(dequeueStub).toHaveBeenCalledTimes(1);
-      expect(isValidCacheTypeSpy).toHaveBeenCalledTimes(1);
+      expect(dequeueStub).toHaveBeenCalledOnce();
+      expect(isValidCacheTypeSpy).toHaveBeenCalledOnce();
       expect(await isValidCacheTypeSpy.mock.results[0].value).toBeFalsy();
       expect(runTaskSpy).toHaveBeenCalledTimes(0);
-      expect(rejectStubForTileTasks).toHaveBeenCalledTimes(1);
+      expect(rejectStubForTileTasks).toHaveBeenCalledOnce();
       expect(rejectStubForTileTasks).toHaveBeenCalledWith(task.jobId, task.id, false, 'Unsupported cache type NotSupportCacheSample');
     });
 
@@ -184,15 +180,14 @@ describe('CacheSeedManager', () => {
       nock(jobManagerTestUrl).get(`/jobs/${task.jobId}?shouldReturnTasks=false`).reply(200, job); // internal job manager getJob request mocking
       nock(jobTrackerTestUrl).post(`/tasks/${task.id}/notify`).reply(200); // internal job tracker notify request mocking
       const runTaskSpy = jest.spyOn(CacheSeedManager.prototype as unknown as { runTask: jest.Mock }, 'runTask');
-      getConfigMock.mockResolvedValue({} as unknown as IMapProxyConfig);
 
       // action
       const action = async () => cacheSeedManager.handleCacheSeedTask();
 
       await expect(action()).resolves.not.toThrow();
-      expect(dequeueStub).toHaveBeenCalledTimes(1);
-      expect(runTaskSpy).toHaveBeenCalledTimes(1);
-      expect(rejectStubForTileTasks).toHaveBeenCalledTimes(1);
+      expect(dequeueStub).toHaveBeenCalledOnce();
+      expect(runTaskSpy).toHaveBeenCalledOnce();
+      expect(rejectStubForTileTasks).toHaveBeenCalledOnce();
       expect(rejectStubForTileTasks).toHaveBeenCalledWith(
         task.jobId,
         task.id,
@@ -200,18 +195,38 @@ describe('CacheSeedManager', () => {
         `Unsupported seeding mode: testMode, should be one of: 'seed' or 'clean'`
       );
     });
-  });
 
-  describe('#Delay', () => {
-    it('Running timeout', async function () {
-      jest.spyOn(CacheSeedManager.prototype as unknown as { delay: jest.Mock }, 'delay').mockRestore();
+    it('Should reject task and mark nonresettable when mapproxy seed reached max retries on invalid bbox error', async function () {
+      const task = getTask();
+      const job = getJob();
+      dequeueStub = jest.spyOn(queueClient.queueHandlerForTileSeedingTasks, 'dequeue').mockResolvedValue(task);
+      rejectStubForTileTasks = jest.spyOn(queueClient.queueHandlerForTileSeedingTasks, 'reject').mockImplementation(async () => Promise.resolve());
+      nock(jobManagerTestUrl).get(`/jobs/${task.jobId}?shouldReturnTasks=false`).reply(200, job); // internal job manager getJob request mocking
+      nock(jobTrackerTestUrl).post(`/tasks/${task.id}/notify`).reply(200); // internal job tracker notify request mocking
+      const sampleError = new ExceededMaxRetriesError('Reject task and mark nonresettable');
+      const runTaskSpy = jest.spyOn(CacheSeedManager.prototype as unknown as { runTask: jest.Mock }, 'runTask').mockRejectedValue(sampleError);
 
       // action
-      const action = async () => cacheSeedManager.delay(0.001);
+      const action = async () => cacheSeedManager.handleCacheSeedTask();
 
       await expect(action()).resolves.not.toThrow();
-      expect(setTimeoutPromises).toHaveBeenCalledTimes(1);
-      expect(setTimeoutPromises).toHaveBeenCalledWith(1);
+      expect(dequeueStub).toHaveBeenCalledOnce();
+      expect(runTaskSpy).toHaveBeenCalledOnce();
+      expect(rejectStubForTileTasks).toHaveBeenCalledOnce();
+      expect(rejectStubForTileTasks).toHaveBeenCalledWith(task.jobId, task.id, false, sampleError.message);
+    });
+
+    describe('#Delay', () => {
+      it('Running timeout', async function () {
+        jest.spyOn(CacheSeedManager.prototype as unknown as { delay: jest.Mock }, 'delay').mockRestore();
+
+        // action
+        const action = async () => cacheSeedManager.delay(0.001);
+
+        await expect(action()).resolves.not.toThrow();
+        expect(setTimeoutPromises).toHaveBeenCalledOnce();
+        expect(setTimeoutPromises).toHaveBeenCalledWith(1);
+      });
     });
   });
 });

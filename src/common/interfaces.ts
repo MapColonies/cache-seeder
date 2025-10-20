@@ -38,7 +38,7 @@ export interface IMapProxyLayer {
 }
 
 export interface ICacheSource {
-  type: string;
+  type: CacheType;
 }
 
 export interface IMapProxyCache {

@@ -1,6 +1,9 @@
+/// <reference types="jest-extended" />
+
 import { readFileSync, promises as fsp } from 'node:fs';
 import jsLogger from '@map-colonies/js-logger';
 import nock from 'nock';
+import * as turfBufferModule from '@turf/buffer';
 import { IHttpRetryConfig } from '@map-colonies/mc-utils';
 import * as cmd from '../../../src/common/cmd';
 import { configMock, init as initConfig, clear as clearConfig, setValue } from '../../mocks/config';
@@ -63,26 +66,28 @@ describe('#MapproxySeed', () => {
       writeFileStub = jest.spyOn(fsp, 'writeFile').mockImplementation(async () => undefined);
       accessStub = jest.spyOn(fsp, 'access').mockImplementation(async () => undefined);
       const runCommandStub = jest.spyOn(cmd, 'runCommand');
+      const bufferSpy = jest.spyOn(turfBufferModule, 'default');
 
       await mapproxySeed.runSeed(task.parameters.seedTasks[0], task.jobId, task.id);
 
-      expect(writeMapproxyYamlSpy).toHaveBeenCalledTimes(1);
+      expect(writeMapproxyYamlSpy).toHaveBeenCalledOnce();
       expect(writeFileStub).toHaveBeenCalledTimes(3);
       expect(writeFileStub).toHaveBeenNthCalledWith(1, configMock.get('mapproxy.mapproxyYamlDir'), yamlContent, 'utf8');
-      expect(writeGeojsonTxtFileSpy).toHaveBeenCalledTimes(1);
+      expect(writeGeojsonTxtFileSpy).toHaveBeenCalledOnce();
       expect(writeFileStub).toHaveBeenNthCalledWith(
         2,
         configMock.get('mapproxy.geometryTxtFile'),
         JSON.stringify(task.parameters.seedTasks[0].geometry),
         'utf8'
       );
-      expect(createSeedYamlFileSpy).toHaveBeenCalledTimes(1);
+      expect(createSeedYamlFileSpy).toHaveBeenCalledOnce();
       expect(accessStub).toHaveBeenCalledTimes(2);
-      expect(getSeedSpy).toHaveBeenCalledTimes(1);
+      expect(getSeedSpy).toHaveBeenCalledOnce();
       expect(getCleanupSpy).toHaveBeenCalledTimes(0);
       expect(writeFileStub).toHaveBeenNthCalledWith(3, configMock.get('mapproxy.seedYamlDir'), seedYamlContent);
-      expect(executeSeedSpy).toHaveBeenCalledTimes(1);
-      expect(runCommandStub).toHaveBeenCalledTimes(1);
+      expect(executeSeedSpy).toHaveBeenCalledOnce();
+      expect(runCommandStub).toHaveBeenCalledOnce();
+      expect(bufferSpy).not.toHaveBeenCalled();
       expect(runCommandStub).toHaveBeenCalledWith(
         configMock.get<string>('mapproxy_cmd_command'),
         [

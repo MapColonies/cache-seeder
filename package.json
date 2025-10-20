@@ -44,18 +44,20 @@
     "@map-colonies/error-types": "^1.1.5",
     "@map-colonies/express-access-log-middleware": "^2.0.1",
     "@map-colonies/js-logger": "^1.0.1",
-    "@map-colonies/mc-priority-queue": "^6.1.1",
-    "@map-colonies/mc-utils": "^2.0.0",
+    "@map-colonies/mc-priority-queue": "^8.2.2",
+    "@map-colonies/mc-utils": "^3.1.0",
     "@map-colonies/read-pkg": "0.0.1",
     "@map-colonies/telemetry": "^6.0.0",
     "@opentelemetry/api": "^1.4.1",
     "@opentelemetry/api-metrics": "0.23.0",
     "@opentelemetry/instrumentation-express": "0.32.1",
     "@opentelemetry/instrumentation-http": "0.35.1",
+    "@turf/buffer": "^7.2.0",
     "compression": "^1.7.4",
     "config": "^3.3.9",
     "express": "^4.18.2",
     "http-status-codes": "^2.2.0",
+    "jest-extended": "^6.0.0",
     "js-yaml": "^4.1.0",
     "lodash": "^4.17.21",
     "reflect-metadata": "^0.1.13",
@@ -94,5 +96,9 @@
     "supertest": "^6.3.3",
     "ts-jest": "^29.0.5",
     "typescript": "^5.3.3"
+  },
+  "//OverrideComment": "https://github.com/Turfjs/turf/issues/2922",
+  "overrides": {
+    "concaveman": "1.2.1"
   }
 }

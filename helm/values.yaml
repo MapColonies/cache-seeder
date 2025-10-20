@@ -133,6 +133,8 @@ env:
   seedConcurrency: 5
   mapproxyCmdCommand: "mapproxy-seed"
   refreshBeforeYearsOffset: 1
+  invalidBboxInitialBufferMeters: 200
+  invalidBboxRetryLimit: 5
 
 resources:
   enabled: true

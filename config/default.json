@@ -58,5 +58,7 @@
   "seedConcurrency": 5,
   "gracefulReloadMaxSeconds": 300,
   "refreshBeforeYearsOffset": 1,
-  "mapproxy_cmd_command": "mapproxy-seed"
+  "mapproxy_cmd_command": "mapproxy-seed",
+  "invalidBboxInitialBufferMeters": 200,
+  "invalidBboxRetryLimit": 5
 }
