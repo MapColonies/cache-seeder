@@ -69,6 +69,16 @@ readinessProbe:
   failureThreshold: 6
   path: /liveness
 
+mclabels:
+  #environment: development
+  component: backend
+  partOf: ingestion
+  owner: raster
+  gisDomain: raster
+  prometheus:
+    enabled: true
+    port: 8080
+
 podAnnotations: {}
 
 extraVolumes: []
