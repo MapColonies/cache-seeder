@@ -1,6 +1,6 @@
 {
   "name": "cache-seed",
-  "version": "2.1.1",
+  "version": "2.1.2",
   "description": "This is worker that responsible execute seed&clean job for mapproxy redis caches wrapping mapproxy-utils package",
   "main": "./src/index.ts",
   "scripts": {
