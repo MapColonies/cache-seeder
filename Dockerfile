@@ -1,4 +1,4 @@
-FROM node:20 AS build_mapproxy
+FROM node:24 AS build_mapproxy
 
 WORKDIR /usr/src/app
 COPY . .
@@ -23,7 +23,7 @@ RUN pip3 install uplink
 # on future mapproxy >2 will contain the redis.py, loader.py, spec.py fixed patch
 RUN cp ./docker/patch/redis.py /opt/venv/lib/python3.11/site-packages/mapproxy/cache/redis.py
 
-FROM node:20 AS mid
+FROM node:24 AS mid
 
 WORKDIR /usr/src/app
 COPY ./package*.json ./
@@ -32,7 +32,7 @@ COPY . .
 RUN npm run build
 
 
-FROM node:20-slim AS production
+FROM node:24-slim AS production
 
 ENV NODE_ENV=production
 
