@@ -76,7 +76,7 @@
     "@types/geojson": "^7946.0.7",
     "@types/jest": "^29.5.2",
     "@types/js-yaml": "^4.0.8",
-    "@types/lodash": "^4.14.191",
+    "@types/lodash": "^4.17.24",
     "@types/multer": "^1.4.7",
     "@types/node": "20.12.6",
     "@types/supertest": "^2.0.12",
@@ -94,7 +94,7 @@
     "rimraf": "^5.0.1",
     "standard-version": "^9.5.0",
     "supertest": "^6.3.3",
-    "ts-jest": "^29.0.5",
+    "ts-jest": "^29.4.6",
     "typescript": "^5.3.3"
   },
   "//OverrideComment": "https://github.com/Turfjs/turf/issues/2922",
