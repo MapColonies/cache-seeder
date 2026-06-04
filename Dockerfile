@@ -27,6 +27,7 @@ FROM node:24 AS mid
 
 WORKDIR /usr/src/app
 COPY ./package*.json ./
+COPY .husky/ .husky/
 RUN npm install
 COPY . .
 RUN npm run build
@@ -35,6 +36,7 @@ RUN npm run build
 FROM node:24-slim AS production
 
 ENV NODE_ENV=production
+ENV CONFIG_OFFLINE_MODE=true
 
 # install the application
 WORKDIR /usr/src/app
@@ -61,5 +63,5 @@ RUN chmod -R 777 /mapproxy
 
 USER node
 EXPOSE 8080
-CMD ["dumb-init", "node",  "./index.js"]
+CMD ["dumb-init", "node", "--import", "./instrumentation.mjs", "./index.js"]
 
