@@ -112,7 +112,13 @@ tracing:
 metrics:
   enabled: false
   url: ''
-  
+
+configManagement:
+  offlineMode: true
+  name: 'cache-seed'
+  version: 'latest'
+  serverUrl: 'http://localhost:8080/api'
+
 image:
   repository: cache-seeder
   tag: 'latest'
