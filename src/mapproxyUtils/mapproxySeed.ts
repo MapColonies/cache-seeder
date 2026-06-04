@@ -2,13 +2,14 @@ import { promises as fsp } from 'node:fs';
 import { dump } from 'js-yaml';
 import buffer from '@turf/buffer';
 import { Feature, Polygon } from 'geojson';
-import { Logger } from '@map-colonies/js-logger';
+import type { Logger } from '@map-colonies/js-logger';
 import { inject, singleton } from 'tsyringe';
-import { Tracer, trace } from '@opentelemetry/api';
+import { trace } from '@opentelemetry/api';
+import type { Tracer } from '@opentelemetry/api';
 import { withSpanAsyncV4 } from '@map-colonies/telemetry';
 import { RASTER_CONVENTIONS, INFRA_CONVENTIONS } from '@map-colonies/telemetry/conventions';
 import { SERVICES } from '../common/constants';
-import { IConfig, ISeed } from '../common/interfaces';
+import type { IConfig, ISeed } from '../common/interfaces';
 import { MapproxyConfigClient } from '../clients/mapproxyConfig';
 import { BaseCache, Cleanup, Seed, seedsSchema, cleanupsSchema, baseSchema } from '../common/schemas/seeds';
 import { Coverage, coveragesSchema } from '../common/schemas/coverages';
@@ -383,7 +384,7 @@ export class MapproxySeed {
         this.logger.info('requested to skip uncached tiles');
         flags.push('--skip-uncached');
       }
-      // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
+
       const cmdStr = `${this.mapproxyCmdCommand} ${flags.join(' ')}`;
       this.logger.info({ msg: 'Execute cli command for seed', command: cmdStr, jobId, taskId });
       spanActive?.addEvent(cmdStr);

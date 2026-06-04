@@ -1,8 +1,8 @@
 import { TaskHandler as QueueHandler, JobManagerClient } from '@map-colonies/mc-priority-queue';
 import { inject, singleton } from 'tsyringe';
-import { Logger } from '@map-colonies/js-logger';
-import { IHttpRetryConfig } from '@map-colonies/mc-utils';
-import { IConfig, IQueueConfig } from '../common/interfaces';
+import type { Logger } from '@map-colonies/js-logger';
+import type { IHttpRetryConfig } from '@map-colonies/mc-utils';
+import type { IConfig, IQueueConfig } from '../common/interfaces';
 import { SERVICES } from '../common/constants';
 
 @singleton()
@@ -16,7 +16,7 @@ export class QueueClient {
     @inject(SERVICES.LOGGER) private readonly logger: Logger,
     @inject(SERVICES.QUEUE_CONFIG) private readonly queueConfig: IQueueConfig
   ) {
-    this.httpRetryConfig = config.get<IHttpRetryConfig>('server.httpRetry');
+    this.httpRetryConfig = config.get<IHttpRetryConfig>('httpRetry');
 
     this.queueHandlerForTileSeedingTasks = new QueueHandler(
       logger,

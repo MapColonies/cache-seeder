@@ -1,9 +1,9 @@
 /* eslint-disable @typescript-eslint/naming-convention */
-import { GeoJSON } from 'geojson';
-import { CacheType, SeedMode } from './enums';
+import type { GeoJSON } from 'geojson';
+import type { CacheType, SeedMode } from './enums';
 
 type JSONValue = string | number | boolean | JSONObject | JSONArray;
-interface JSONArray extends Array<JSONValue> {}
+type JSONArray = JSONValue[];
 
 export interface JSONObject {
   [x: string]: JSONValue;

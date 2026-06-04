@@ -26,7 +26,7 @@ export async function runCommand(
 
     runCommand.stderr.on('data', (data: Buffer) => {
       const stdErrArr = data.toString('utf-8').trim().split('\n');
-      stdErrStr = stdErrArr[stdErrArr.length - 1];
+      stdErrStr = stdErrArr[stdErrArr.length - 1] ?? '';
     });
 
     runCommand.once('exit', (code) => {
