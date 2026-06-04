@@ -7,10 +7,11 @@ export const DEFAULT_SERVER_PORT = 80;
 export const NODE_VERSION = process.versions.node;
 
 /* eslint-disable @typescript-eslint/naming-convention */
-export const SERVICES: Record<string, symbol> = {
+export const SERVICES = {
   LOGGER: Symbol('Logger'),
   CONFIG: Symbol('Config'),
   TRACER: Symbol('Tracer'),
-  METER: Symbol('Meter'),
-};
+  METRICS: Symbol('Metrics'),
+  QUEUE_CONFIG: Symbol('QueueConfig'),
+} satisfies Record<string, symbol>;
 /* eslint-enable @typescript-eslint/naming-convention */
