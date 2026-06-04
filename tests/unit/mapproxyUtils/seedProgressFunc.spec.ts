@@ -1,6 +1,6 @@
-import jsLogger from '@map-colonies/js-logger';
+import { logger } from '../../mocks/logger';
 import { configMock, init as initConfig, clear as clearConfig } from '../../mocks/config';
-import { getApp } from '../../../src/app';
+import { registerDependencies } from '../../../src/common/dependencyRegistration';
 import { getContainerConfig, resetContainer } from '../testContainerConfig';
 import { MapproxySeed } from '../../../src/mapproxyUtils/mapproxySeed';
 import { MapproxyConfigClient } from '../../../src/clients/mapproxyConfig';
@@ -14,12 +14,9 @@ describe('#SeedProgressFunction', () => {
     initConfig();
 
     console.warn = jest.fn();
-    getApp({
-      override: [...getContainerConfig()],
-      useChild: false,
-    });
-    mapproxyConfigClient = new MapproxyConfigClient(configMock, jsLogger({ enabled: false }), tracerMock);
-    mapproxySeed = new MapproxySeed(jsLogger({ enabled: false }), configMock, tracerMock, mapproxyConfigClient);
+    registerDependencies(getContainerConfig());
+    mapproxyConfigClient = new MapproxyConfigClient(configMock, logger, tracerMock);
+    mapproxySeed = new MapproxySeed(logger, configMock, tracerMock, mapproxyConfigClient);
   });
 
   afterEach(function () {

@@ -1,4 +1,4 @@
-import { Span, Tracer } from '@opentelemetry/api';
+import type { Span, Tracer } from '@opentelemetry/api';
 
 const setStatusMock = jest.fn();
 const recordExceptionMock = jest.fn();

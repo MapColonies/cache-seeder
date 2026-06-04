@@ -1,12 +1,12 @@
 /// <reference types="jest-extended" />
 
 import { readFileSync, promises as fsp } from 'node:fs';
-import jsLogger from '@map-colonies/js-logger';
+import { logger } from '../../mocks/logger';
 import nock from 'nock';
 import * as turfBufferModule from '@turf/buffer';
 import { IHttpRetryConfig } from '@map-colonies/mc-utils';
 import { configMock, init as initConfig, clear as clearConfig, setValue } from '../../mocks/config';
-import { getApp } from '../../../src/app';
+import { registerDependencies } from '../../../src/common/dependencyRegistration';
 import { getTask } from '../../mockData/testStaticData';
 import { getContainerConfig, resetContainer } from '../testContainerConfig';
 import { MapproxySeed } from '../../../src/mapproxyUtils/mapproxySeed';
@@ -33,16 +33,13 @@ describe('#MapproxySeed', () => {
     setValue('mapproxy.mapproxyApiUrl', mapproxyTestUrl);
     setValue('seedAttempts', 4);
     setValue('queue', { ...configMock.get<IQueueConfig>('queue'), jobManagerBaseUrl: jobManagerTestUrl });
-    setValue('server.httpRetry', { ...configMock.get<IHttpRetryConfig>('server.httpRetry'), delay: 0 });
-    mapproxyConfigClient = new MapproxyConfigClient(configMock, jsLogger({ enabled: false }), tracerMock);
+    setValue('httpRetry', { ...configMock.get<IHttpRetryConfig>('httpRetry'), delay: 0 });
+    mapproxyConfigClient = new MapproxyConfigClient(configMock, logger, tracerMock);
     console.warn = jest.fn();
 
-    getApp({
-      override: [...getContainerConfig()],
-      useChild: false,
-    });
+    registerDependencies(getContainerConfig());
 
-    mapproxySeed = new MapproxySeed(jsLogger({ enabled: false }), configMock, tracerMock, mapproxyConfigClient);
+    mapproxySeed = new MapproxySeed(logger, configMock, tracerMock, mapproxyConfigClient);
     bufferSpy = jest.spyOn(turfBufferModule, 'default');
     writeFileStub = jest.spyOn(fsp, 'writeFile');
     writeMapproxyYamlSpy = jest.spyOn(MapproxySeed.prototype as unknown as { writeMapproxyYaml: jest.Mock }, 'writeMapproxyYaml');
@@ -73,7 +70,7 @@ describe('#MapproxySeed', () => {
         .mockResolvedValueOnce(undefined);
       writeFileStub.mockImplementation(undefined);
 
-      await mapproxySeed.runSeed(task.parameters.seedTasks[0], task.jobId, task.id);
+      await mapproxySeed.runSeed(task.parameters.seedTasks[0]!, task.jobId, task.id);
 
       expect(writeMapproxyYamlSpy).toHaveBeenCalledOnce();
       expect(createSeedYamlFileSpy).toHaveBeenCalledOnce();
@@ -94,7 +91,7 @@ describe('#MapproxySeed', () => {
       executeSeedSpy.mockRejectedValue(new Error('Command failed with error [mapproxy.grid.GridError: Invalid BBOX]'));
       writeFileStub.mockImplementation(undefined);
 
-      const action = async () => mapproxySeed.runSeed(task.parameters.seedTasks[0], task.jobId, task.id);
+      const action = async () => mapproxySeed.runSeed(task.parameters.seedTasks[0]!, task.jobId, task.id);
       await expect(action).rejects.toThrow(ExceededMaxRetriesError);
 
       const maxRetries = configMock.get<number>('invalidBboxRetryLimit');
@@ -117,7 +114,7 @@ describe('#MapproxySeed', () => {
       executeSeedSpy.mockRejectedValue(new Error('Command failed with error [mapproxy.grid.GridError: Invalid BBOX]'));
       bufferSpy.mockReturnValue(undefined);
 
-      const action = async () => mapproxySeed.runSeed(task.parameters.seedTasks[0], task.jobId, task.id);
+      const action = async () => mapproxySeed.runSeed(task.parameters.seedTasks[0]!, task.jobId, task.id);
       await expect(action).rejects.toThrow('Buffer operation resulted in undefined geometry');
 
       expect(writeMapproxyYamlSpy).toHaveBeenCalledOnce();

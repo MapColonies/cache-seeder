@@ -1,13 +1,13 @@
 /// <reference types="jest-extended" />
 
 import { readFileSync, promises as fsp } from 'node:fs';
-import jsLogger from '@map-colonies/js-logger';
+import { logger } from '../../mocks/logger';
 import nock from 'nock';
 import * as turfBufferModule from '@turf/buffer';
 import { IHttpRetryConfig } from '@map-colonies/mc-utils';
 import * as cmd from '../../../src/common/cmd';
 import { configMock, init as initConfig, clear as clearConfig, setValue } from '../../mocks/config';
-import { getApp } from '../../../src/app';
+import { registerDependencies } from '../../../src/common/dependencyRegistration';
 import { getTask } from '../../mockData/testStaticData';
 import { getContainerConfig, resetContainer } from '../testContainerConfig';
 import { MapproxySeed } from '../../../src/mapproxyUtils/mapproxySeed';
@@ -30,15 +30,12 @@ describe('#MapproxySeed', () => {
     setValue('mapproxy.mapproxyApiUrl', mapproxyTestUrl);
     setValue('seedAttempts', 4);
     setValue('queue', { ...configMock.get<IQueueConfig>('queue'), jobManagerBaseUrl: jobManagerTestUrl });
-    setValue('server.httpRetry', { ...configMock.get<IHttpRetryConfig>('server.httpRetry'), delay: 0 });
-    mapproxyConfigClient = new MapproxyConfigClient(configMock, jsLogger({ enabled: false }), tracerMock);
+    setValue('httpRetry', { ...configMock.get<IHttpRetryConfig>('httpRetry'), delay: 0 });
+    mapproxyConfigClient = new MapproxyConfigClient(configMock, logger, tracerMock);
 
     console.warn = jest.fn();
-    getApp({
-      override: [...getContainerConfig()],
-      useChild: false,
-    });
-    mapproxySeed = new MapproxySeed(jsLogger({ enabled: false }), configMock, tracerMock, mapproxyConfigClient);
+    registerDependencies(getContainerConfig());
+    mapproxySeed = new MapproxySeed(logger, configMock, tracerMock, mapproxyConfigClient);
   });
 
   afterEach(function () {
@@ -68,7 +65,7 @@ describe('#MapproxySeed', () => {
       const runCommandStub = jest.spyOn(cmd, 'runCommand');
       const bufferSpy = jest.spyOn(turfBufferModule, 'default');
 
-      await mapproxySeed.runSeed(task.parameters.seedTasks[0], task.jobId, task.id);
+      await mapproxySeed.runSeed(task.parameters.seedTasks[0]!, task.jobId, task.id);
 
       expect(writeMapproxyYamlSpy).toHaveBeenCalledOnce();
       expect(writeFileStub).toHaveBeenCalledTimes(3);
@@ -77,7 +74,7 @@ describe('#MapproxySeed', () => {
       expect(writeFileStub).toHaveBeenNthCalledWith(
         2,
         configMock.get('mapproxy.geometryTxtFile'),
-        JSON.stringify(task.parameters.seedTasks[0].geometry),
+        JSON.stringify(task.parameters.seedTasks[0]!.geometry),
         'utf8'
       );
       expect(createSeedYamlFileSpy).toHaveBeenCalledOnce();
@@ -98,7 +95,7 @@ describe('#MapproxySeed', () => {
           '--concurrency',
           '5',
           '--progress-file',
-          `${configMock.get('mapproxy.seedProgressFileDir')}_${task.parameters.seedTasks[0].mode}`,
+          `${configMock.get('mapproxy.seedProgressFileDir')}_${task.parameters.seedTasks[0]!.mode}`,
           '--continue',
           '--skip-uncached',
         ],

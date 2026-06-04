@@ -1,10 +1,10 @@
 import { readFileSync } from 'node:fs';
-import jsLogger from '@map-colonies/js-logger';
 import nock from 'nock';
 import { NotFoundError, InternalServerError } from '@map-colonies/error-types';
+import { logger } from '../../mocks/logger';
 import { init as initMockConfig, configMock, setValue, clear as clearMockConfig } from '../../mocks/config';
 import { MapproxyConfigClient } from '../../../src/clients/mapproxyConfig';
-import { getApp } from '../../../src/app';
+import { registerDependencies } from '../../../src/common/dependencyRegistration';
 import { getContainerConfig, resetContainer } from '../testContainerConfig';
 import { tracerMock } from '../../mocks/tracer';
 
@@ -16,12 +16,9 @@ describe('MapproxyConfigClient', () => {
     setValue('mapproxy.mapproxyApiUrl', mapproxyTestUrl);
 
     console.warn = jest.fn();
-    getApp({
-      override: [...getContainerConfig()],
-      useChild: true,
-    });
+    registerDependencies(getContainerConfig());
 
-    mapproxyConfigClient = new MapproxyConfigClient(configMock, jsLogger({ enabled: false }), tracerMock);
+    mapproxyConfigClient = new MapproxyConfigClient(configMock, logger, tracerMock);
   });
   afterEach(function () {
     clearMockConfig();

@@ -1,29 +1,27 @@
-import { trace, metrics as OtelMetrics } from '@opentelemetry/api';
+import { trace } from '@opentelemetry/api';
 import { container } from 'tsyringe';
-import jsLogger from '@map-colonies/js-logger';
+import { Registry } from 'prom-client';
 import { configMock, getMock, hasMock, init as initConfig } from '../mocks/config';
-import { SERVICES, SERVICE_NAME } from '../../src/common/constants';
-import { tracing } from '../../src/common/tracing';
-import { InjectionObject } from '../../src/common/dependencyRegistration';
-import { IQueueConfig } from '../../src/common/interfaces';
+import { logger } from '../mocks/logger';
+import { SERVICES } from '../../src/common/constants';
+import type { InjectionObject } from '../../src/common/dependencyRegistration';
+import type { IQueueConfig } from '../../src/common/interfaces';
 
-const queueConfig = configMock.get<IQueueConfig>('queue');
 const tracer = trace.getTracer('testTracer');
 function getContainerConfig(): InjectionObject<unknown>[] {
   initConfig();
+  const queueConfig = configMock.get<IQueueConfig>('queue');
   return [
     { token: SERVICES.CONFIG, provider: { useValue: configMock } },
-    { token: SERVICES.LOGGER, provider: { useValue: jsLogger({ enabled: false }) } },
+    { token: SERVICES.LOGGER, provider: { useValue: logger } },
     { token: SERVICES.QUEUE_CONFIG, provider: { useValue: queueConfig } },
     { token: SERVICES.TRACER, provider: { useValue: tracer } },
-    { token: SERVICES.METER, provider: { useValue: OtelMetrics.getMeterProvider().getMeter(SERVICE_NAME) } },
+    { token: SERVICES.METRICS, provider: { useValue: new Registry() } },
     {
       token: 'onSignal',
       provider: {
         useValue: {
-          useValue: async (): Promise<void> => {
-            await Promise.all([tracing.stop()]);
-          },
+          useValue: async (): Promise<void> => Promise.resolve(),
         },
       },
     },

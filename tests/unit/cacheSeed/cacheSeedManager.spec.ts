@@ -1,25 +1,23 @@
 /// <reference types="jest-extended" />
 
-import { setTimeout as setTimeoutPromises } from 'timers/promises';
-import jsLogger from '@map-colonies/js-logger';
+import { setTimeout as setTimeoutPromises } from 'node:timers/promises';
 import nock from 'nock';
-import { IHttpRetryConfig } from '@map-colonies/mc-utils';
+import type { IHttpRetryConfig } from '@map-colonies/mc-utils';
 import { trace } from '@opentelemetry/api';
+import { logger } from '../../mocks/logger';
 import { CacheSeedManager } from '../../../src/cacheSeed/cacheSeedManager';
 import { configMock, init as initConfig, clear as clearConfig, setValue } from '../../mocks/config';
-import { getApp } from '../../../src/app';
+import { registerDependencies } from '../../../src/common/dependencyRegistration';
 import { getTask, getJob } from '../../mockData/testStaticData';
 import { getContainerConfig, resetContainer } from '../testContainerConfig';
 import { QueueClient } from '../../../src/clients/queueClient';
 import { MapproxySeed } from '../../../src/mapproxyUtils/mapproxySeed';
-import { IQueueConfig } from '../../../src/common/interfaces';
+import type { IQueueConfig } from '../../../src/common/interfaces';
 import { MapproxyConfigClient } from '../../../src/clients/mapproxyConfig';
-import { tracing } from '../../../src/common/tracing';
 import { SERVICE_NAME } from '../../../src/common/constants';
 import { JobTrackerClient } from '../../../src/clients/jobTrackerClient';
 import { ExceededMaxRetriesError } from '../../../src/common/errors';
 
-tracing.start();
 const tracer = trace.getTracer(SERVICE_NAME);
 
 let queueClient: QueueClient;
@@ -29,7 +27,7 @@ let jobTrackerClient: JobTrackerClient;
 let dequeueStub: jest.SpyInstance;
 let ackStubForTileTasks: jest.SpyInstance;
 let rejectStubForTileTasks: jest.SpyInstance;
-jest.mock('timers/promises', () => ({
+jest.mock('node:timers/promises', () => ({
   setTimeout: jest.fn().mockImplementation(() => undefined),
 }));
 
@@ -42,20 +40,17 @@ describe('CacheSeedManager', () => {
     setValue('seedAttempts', 4);
     setValue('queue', { ...configMock.get<IQueueConfig>('queue'), jobManagerBaseUrl: jobManagerTestUrl });
     setValue('servicesUrl.jobTracker', jobTrackerTestUrl);
-    setValue('server.httpRetry', { ...configMock.get<IHttpRetryConfig>('server.httpRetry'), delay: 0 });
-    mapproxyConfigClient = new MapproxyConfigClient(configMock, jsLogger({ enabled: false }), tracer);
-    queueClient = new QueueClient(configMock, jsLogger({ enabled: false }), configMock.get<IQueueConfig>('queue'));
-    jobTrackerClient = new JobTrackerClient(configMock, jsLogger({ enabled: false }), tracer);
+    setValue('httpRetry', { ...configMock.get<IHttpRetryConfig>('httpRetry'), delay: 0 });
+    mapproxyConfigClient = new MapproxyConfigClient(configMock, logger, tracer);
+    queueClient = new QueueClient(configMock, logger, configMock.get<IQueueConfig>('queue'));
+    jobTrackerClient = new JobTrackerClient(configMock, logger, tracer);
 
     jest.spyOn(CacheSeedManager.prototype as unknown as { delay: jest.Mock }, 'delay').mockResolvedValue(undefined);
 
     console.warn = jest.fn();
-    getApp({
-      override: [...getContainerConfig()],
-      useChild: false,
-    });
-    mapproxySeed = new MapproxySeed(jsLogger({ enabled: false }), configMock, tracer, mapproxyConfigClient);
-    cacheSeedManager = new CacheSeedManager(jsLogger({ enabled: false }), configMock, tracer, queueClient, mapproxySeed, jobTrackerClient);
+    registerDependencies(getContainerConfig());
+    mapproxySeed = new MapproxySeed(logger, configMock, tracer, mapproxyConfigClient);
+    cacheSeedManager = new CacheSeedManager(logger, configMock, tracer, queueClient, mapproxySeed, jobTrackerClient);
   });
 
   afterEach(function () {
@@ -88,10 +83,10 @@ describe('CacheSeedManager', () => {
       expect(dequeueStub).toHaveBeenCalledOnce();
       expect(runTaskSpy).toHaveBeenCalledOnce();
       expect(isValidCacheTypeSpy).toHaveBeenCalledOnce();
-      expect(await isValidCacheTypeSpy.mock.results[0].value).toBe(true);
+      expect(await isValidCacheTypeSpy.mock.results[0]!.value).toBe(true);
       expect(runSeedSpy).toHaveBeenCalledTimes(2);
-      expect(runSeedSpy).toHaveBeenNthCalledWith(1, task.parameters.seedTasks[0], task.jobId, task.id);
-      expect(runSeedSpy).toHaveBeenNthCalledWith(2, task.parameters.seedTasks[1], task.jobId, task.id);
+      expect(runSeedSpy).toHaveBeenNthCalledWith(1, task.parameters.seedTasks[0]!, task.jobId, task.id);
+      expect(runSeedSpy).toHaveBeenNthCalledWith(2, task.parameters.seedTasks[1]!, task.jobId, task.id);
       expect(ackStubForTileTasks).toHaveBeenCalledOnce();
     });
 
@@ -166,7 +161,7 @@ describe('CacheSeedManager', () => {
       await expect(action()).resolves.not.toThrow();
       expect(dequeueStub).toHaveBeenCalledOnce();
       expect(isValidCacheTypeSpy).toHaveBeenCalledOnce();
-      expect(await isValidCacheTypeSpy.mock.results[0].value).toBeFalsy();
+      expect(await isValidCacheTypeSpy.mock.results[0]!.value).toBeFalsy();
       expect(runTaskSpy).toHaveBeenCalledTimes(0);
       expect(rejectStubForTileTasks).toHaveBeenCalledOnce();
       expect(rejectStubForTileTasks).toHaveBeenCalledWith(task.jobId, task.id, false, 'Unsupported cache type NotSupportCacheSample');

@@ -1,4 +1,4 @@
-import { Logger } from '@map-colonies/js-logger';
+import type { Logger } from '@map-colonies/js-logger';
 
 const logMock = jest.fn();
 const logger = {
