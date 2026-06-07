@@ -41,6 +41,7 @@ ENV CONFIG_OFFLINE_MODE=true
 # install the application
 WORKDIR /usr/src/app
 COPY --chown=node:node package*.json ./
+COPY --chown=node:node .husky/ .husky/
 RUN npm ci --only=production
 
 RUN apt-get update || : && apt-get install python3 -y
