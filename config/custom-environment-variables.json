@@ -3,7 +3,9 @@
     "filePath": "OPENAPI_FILE_PATH"
   },
   "telemetry": {
-    "serviceName": "TELEMETRY_SERVICE_NAME",
+    "shared": {
+      "serviceName": "TELEMETRY_SERVICE_NAME"
+    },
     "logger": {
       "level": "LOG_LEVEL",
       "prettyPrint": {

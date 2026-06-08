@@ -2,6 +2,7 @@ global:
   cloudProvider: {}
   tracing: {}
   metrics: {}
+  openTelemetryOptions: {}
   environment: ''
   jobDefinitions: {}
   storage:
@@ -115,7 +116,7 @@ metrics:
 
 configManagement:
   offlineMode: true
-  name: 'cache-seed'
+  name: 'cache-seeder'
   version: 'latest'
   serverUrl: 'http://localhost:8080/api'
 
@@ -138,13 +139,28 @@ env:
   protocol: TCP
   logLevel: info
   logPrettyPrintEnabled: false
+  telemetryServiceName: "" # defaults to the chart name when empty
+  openTelemetryOptions:
+    enabled: false
+    url: ''
+    resourceAttributes: {}
   responseCompressionEnabled: true
   requestPayloadLimit: 1mb
-  
+
+  httpRetry:
+    attempts: 5
+    delay: exponential
+    shouldResetTimeout: true
+    disableHttpClientLogs: true
+
   queue:
     heartbeat:
       heartbeatIntervalMs: 3000
     dequeueIntervalMs: 2000
+  mapproxy:
+    mapproxyYamlDir: /mapproxy/mapproxy.yaml
+    seedYamlDir: /mapproxy/seed.yaml
+    geometryTxtFile: /mapproxy/coverage.json
   seedAttempts: 5
   seedConcurrency: 5
   mapproxyCmdCommand: "mapproxy-seed"
