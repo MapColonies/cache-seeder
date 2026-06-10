@@ -9,6 +9,7 @@ export interface JSONObject {
   [x: string]: JSONValue;
 }
 
+//TODO: delete this interface and use ConfigType when we create the config schema for this service
 export interface IConfig {
   get: <T>(setting: string) => T;
   has: (setting: string) => boolean;
