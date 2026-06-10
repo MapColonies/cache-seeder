@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [2.3.0](https://github.com/MapColonies/cache-seeder/compare/v2.1.1...v2.3.0) (2026-06-10)
+
+
+### Features
+
+* upgrade to the new ts-server-boilerplate(MAPCO-10112) ([#45](https://github.com/MapColonies/cache-seeder/issues/45)) ([4b120d7](https://github.com/MapColonies/cache-seeder/commit/4b120d7751836c66fa90bcd1db1349ede2e2777f))
+
+
+### Miscellaneous Chores
+
+* force alignment to rc track ([1535588](https://github.com/MapColonies/cache-seeder/commit/15355881d641adb4d02cec7ce1f23fed565bb7f7))
+
 ## [2.2.0](https://github.com/MapColonies/cache-seeder/compare/v2.1.1...v2.2.0) (2026-01-22)
 
 ### [2.1.1](https://github.com/MapColonies/cache-seeder/compare/v2.1.0...v2.1.1) (2025-10-20)
