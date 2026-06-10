@@ -1,3 +1,4 @@
+/* eslint-disable import-x/no-named-as-default-member */
 import { readFileSync } from 'node:fs';
 import nock from 'nock';
 import { NotFoundError, InternalServerError } from '@map-colonies/error-types';

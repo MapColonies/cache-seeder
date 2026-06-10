@@ -1,11 +1,10 @@
 import { promises as fsp } from 'node:fs';
 import { dump } from 'js-yaml';
-import buffer from '@turf/buffer';
+import { buffer } from '@turf/buffer';
 import { Feature, Polygon } from 'geojson';
 import type { Logger } from '@map-colonies/js-logger';
 import { inject, singleton } from 'tsyringe';
-import { trace } from '@opentelemetry/api';
-import type { Tracer } from '@opentelemetry/api';
+import { trace, type Tracer } from '@opentelemetry/api';
 import { withSpanAsyncV4 } from '@map-colonies/telemetry';
 import { RASTER_CONVENTIONS, INFRA_CONVENTIONS } from '@map-colonies/telemetry/conventions';
 import { SERVICES } from '../common/constants';

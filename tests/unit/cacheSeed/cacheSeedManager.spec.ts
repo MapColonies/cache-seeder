@@ -1,3 +1,4 @@
+/* eslint-disable import-x/no-named-as-default-member */
 /// <reference types="jest-extended" />
 
 import { setTimeout as setTimeoutPromises } from 'node:timers/promises';

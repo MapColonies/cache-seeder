@@ -12,6 +12,7 @@ export const fileExists = async (filePath: string): Promise<boolean> => {
   try {
     await promises.access(filePath, constants.F_OK);
     return true;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
   } catch (err) {
     return false;
   }

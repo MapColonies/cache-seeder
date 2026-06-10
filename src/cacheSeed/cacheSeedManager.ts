@@ -4,8 +4,7 @@ import { inject, singleton } from 'tsyringe';
 import type { ITaskResponse } from '@map-colonies/mc-priority-queue';
 import { withSpanAsyncV4 } from '@map-colonies/telemetry';
 import { INFRA_CONVENTIONS, RASTER_CONVENTIONS } from '@map-colonies/telemetry/conventions';
-import { SpanStatusCode, trace } from '@opentelemetry/api';
-import type { SpanOptions, Tracer } from '@opentelemetry/api';
+import { SpanStatusCode, trace, type SpanOptions, type Tracer } from '@opentelemetry/api';
 import { SERVICES } from '../common/constants';
 import type { IConfig, IJobParams, ITaskParams, ISeed } from '../common/interfaces';
 import { MapproxySeed } from '../mapproxyUtils/mapproxySeed';
@@ -182,7 +181,7 @@ export class CacheSeedManager {
     const logMessage = isMaxRetriesError ? errorMessage : `Task failed, will retry with increased attempts`;
     const shouldRetry = !isMaxRetriesError;
 
-    this.logger.error({ jobId, taskId, msg: logMessage, error });
+    this.logger.error({ jobId, taskId, msg: logMessage, err: error });
     await this.queueClient.queueHandlerForTileSeedingTasks.reject(jobId, taskId, shouldRetry, errorMessage);
 
     trace.getActiveSpan()?.recordException(error as Error);

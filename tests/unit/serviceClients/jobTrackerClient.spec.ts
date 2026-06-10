@@ -1,3 +1,4 @@
+/* eslint-disable import-x/no-named-as-default-member */
 import nock from 'nock';
 import type { ITaskResponse } from '@map-colonies/mc-priority-queue';
 import { logger } from '../../mocks/logger';
