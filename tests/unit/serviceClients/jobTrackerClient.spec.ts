@@ -1,6 +1,7 @@
-import jsLogger from '@map-colonies/js-logger';
+/* eslint-disable import-x/no-named-as-default-member */
 import nock from 'nock';
-import { ITaskResponse } from '@map-colonies/mc-priority-queue';
+import type { ITaskResponse } from '@map-colonies/mc-priority-queue';
+import { logger } from '../../mocks/logger';
 import { configMock, registerDefaultConfig } from '../../mocks/config';
 import { JobTrackerClient } from '../../../src/clients/jobTrackerClient';
 import { tracerMock } from '../../mocks/tracer';
@@ -13,7 +14,7 @@ describe('JobTrackerClient', () => {
   beforeEach(() => {
     registerDefaultConfig();
     jobTrackerUrl = configMock.get<string>('servicesUrl.jobTracker');
-    jobTrackerClient = new JobTrackerClient(configMock, jsLogger({ enabled: false }), tracerMock);
+    jobTrackerClient = new JobTrackerClient(configMock, logger, tracerMock);
   });
 
   afterEach(() => {

@@ -1,4 +1,4 @@
-import { MapproxyConfigClient } from '../../../src/clients/mapproxyConfig';
+import type { MapproxyConfigClient } from '../../../src/clients/mapproxyConfig';
 
 const getConfigMock = jest.fn();
 

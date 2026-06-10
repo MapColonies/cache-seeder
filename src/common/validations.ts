@@ -1,6 +1,6 @@
 import { promises, constants } from 'node:fs';
 import { load } from 'js-yaml';
-import { ICacheSource, IMapProxyConfig } from './interfaces';
+import type { ICacheSource, IMapProxyConfig } from './interfaces';
 import { CacheType } from './enums';
 
 export const zoomComparison = (fromZoom: number, toZoom: number): boolean => {
@@ -12,6 +12,7 @@ export const fileExists = async (filePath: string): Promise<boolean> => {
   try {
     await promises.access(filePath, constants.F_OK);
     return true;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
   } catch (err) {
     return false;
   }
@@ -34,7 +35,7 @@ export const isRedisCache = (cacheName: string, mapproxyConfigYaml: string): boo
 
 export const isGridExists = (gridName: string, mapproxyConfigYaml: string): boolean => {
   const mapproxyConfigJson = load(mapproxyConfigYaml) as IMapProxyConfig;
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+
   const gridsNames = Object.keys(mapproxyConfigJson.grids);
   const isGridExists = gridsNames.includes(gridName);
   return isGridExists;

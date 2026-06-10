@@ -1,6 +1,6 @@
-import config from 'config';
 import { get, has } from 'lodash';
-import { IConfig } from '../../src/common/interfaces';
+import defaultConfig from '../../config/default.json';
+import type { IConfig } from '../../src/common/interfaces';
 
 let mockConfig: Record<string, unknown> = {};
 const getMock = jest.fn();
@@ -13,7 +13,11 @@ const configMock = {
 
 const init = (): void => {
   getMock.mockImplementation((key: string): unknown => {
-    return mockConfig[key] ?? config.get(key);
+    const value: unknown = mockConfig[key] ?? get(defaultConfig, key);
+    return value;
+  });
+  hasMock.mockImplementation((key: string): boolean => {
+    return key in mockConfig || has(defaultConfig, key);
   });
 };
 
@@ -30,11 +34,11 @@ const clear = (): void => {
 };
 
 const setConfigValues = (values: Record<string, unknown>): void => {
-  getMock.mockImplementation((key: string) => {
-    const value = get(values, key) ?? config.get(key);
+  getMock.mockImplementation((key: string): unknown => {
+    const value: unknown = get(values, key) ?? get(defaultConfig, key);
     return value;
   });
-  hasMock.mockImplementation((key: string) => has(values, key) || config.has(key));
+  hasMock.mockImplementation((key: string) => has(values, key) || has(defaultConfig, key));
 };
 
 const registerDefaultConfig = (): void => {
@@ -46,7 +50,7 @@ const registerDefaultConfig = (): void => {
       },
     },
     server: {
-      port: '8081',
+      port: 8080,
       request: {
         payload: {
           limit: '1mb',
@@ -58,12 +62,12 @@ const registerDefaultConfig = (): void => {
           options: null,
         },
       },
-      httpRetry: {
-        attempts: 5,
-        delay: 'exponential',
-        shouldResetTimeout: true,
-        disableHttpClientLogs: true,
-      },
+    },
+    httpRetry: {
+      attempts: 5,
+      delay: 'exponential',
+      shouldResetTimeout: true,
+      disableHttpClientLogs: true,
     },
     queue: {
       jobManagerBaseUrl: 'http://test2',
@@ -85,6 +89,9 @@ const registerDefaultConfig = (): void => {
     gracefulReloadMaxSeconds: 0,
     refreshBeforeYearsOffset: 1,
     seedAttempts: 5,
+    seedConcurrency: 5,
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    mapproxy_cmd_command: 'mapproxy-seed',
     servicesUrl: {
       jobTracker: 'http://localhost:8090',
     },

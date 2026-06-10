@@ -1,12 +1,12 @@
-import { setTimeout as setTimeoutPromise } from 'timers/promises';
-import { Logger } from '@map-colonies/js-logger';
+import { setTimeout as setTimeoutPromise } from 'node:timers/promises';
+import type { Logger } from '@map-colonies/js-logger';
 import { inject, singleton } from 'tsyringe';
-import { ITaskResponse } from '@map-colonies/mc-priority-queue';
+import type { ITaskResponse } from '@map-colonies/mc-priority-queue';
 import { withSpanAsyncV4 } from '@map-colonies/telemetry';
 import { INFRA_CONVENTIONS, RASTER_CONVENTIONS } from '@map-colonies/telemetry/conventions';
-import { SpanOptions, SpanStatusCode, Tracer, trace } from '@opentelemetry/api';
+import { SpanStatusCode, trace, type SpanOptions, type Tracer } from '@opentelemetry/api';
 import { SERVICES } from '../common/constants';
-import { IConfig, IJobParams, ITaskParams, ISeed } from '../common/interfaces';
+import type { IConfig, IJobParams, ITaskParams, ISeed } from '../common/interfaces';
 import { MapproxySeed } from '../mapproxyUtils/mapproxySeed';
 import { QueueClient } from '../clients/queueClient';
 import { CacheType, SeedMode } from '../common/enums';
@@ -83,7 +83,7 @@ export class CacheSeedManager {
         await this.mapproxySeed.runSeed(task, jobId, taskId);
       } else {
         const logErrMsg = `Unsupported seeding mode: ${task.mode as string}, should be one of: 'seed' or 'clean'`;
-        this.logger.error(logObj, logErrMsg);
+        this.logger.error({ ...logObj, msg: logErrMsg });
         throw new Error(logErrMsg);
       }
     }
@@ -116,7 +116,7 @@ export class CacheSeedManager {
       attributes: {
         [INFRA_CONVENTIONS.infra.jobManagement.jobId]: tilesTask.jobId,
         [INFRA_CONVENTIONS.infra.jobManagement.taskId]: tilesTask.id,
-        [RASTER_CONVENTIONS.raster.mapproxyApi.cacheName]: tilesTask.parameters.seedTasks[0].layerId,
+        [RASTER_CONVENTIONS.raster.mapproxyApi.cacheName]: tilesTask.parameters.seedTasks[0]!.layerId,
         [RASTER_CONVENTIONS.raster.catalogManager.catalogId]: tilesTask.parameters.catalogId,
       },
     };
@@ -152,7 +152,7 @@ export class CacheSeedManager {
     if (attempts > this.seedAttempts) {
       const logWarnMsg = `Reached to max attempts and will close task as failed`;
       const logWarnObj = { maxServiceAttempts: this.seedAttempts, currentTaskAttemps: attempts, jobId, taskId };
-      this.logger.warn(logWarnObj, logWarnMsg);
+      this.logger.warn({ ...logWarnObj, msg: logWarnMsg });
       trace.getActiveSpan()?.addEvent(logWarnMsg, logWarnObj);
 
       await this.queueClient.queueHandlerForTileSeedingTasks.reject(jobId, taskId, false);
@@ -181,7 +181,7 @@ export class CacheSeedManager {
     const logMessage = isMaxRetriesError ? errorMessage : `Task failed, will retry with increased attempts`;
     const shouldRetry = !isMaxRetriesError;
 
-    this.logger.error({ jobId, taskId, msg: logMessage, error });
+    this.logger.error({ jobId, taskId, msg: logMessage, err: error });
     await this.queueClient.queueHandlerForTileSeedingTasks.reject(jobId, taskId, shouldRetry, errorMessage);
 
     trace.getActiveSpan()?.recordException(error as Error);

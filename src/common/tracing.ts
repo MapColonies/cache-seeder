@@ -1,26 +1,31 @@
-import { Tracing } from '@map-colonies/telemetry';
-import { Link } from '@opentelemetry/api';
-import * as api from '@opentelemetry/api';
-import { AsyncHooksContextManager } from '@opentelemetry/context-async-hooks';
-import { SEMRESATTRS_PROCESS_RUNTIME_NAME, SEMRESATTRS_PROCESS_RUNTIME_VERSION } from '@opentelemetry/semantic-conventions';
-import { HttpInstrumentation } from '@opentelemetry/instrumentation-http';
-import { ITraceParentContext } from './interfaces';
-import { NODE_VERSION } from './constants';
+import { Tracing } from '@map-colonies/tracing';
+import type { Link } from '@opentelemetry/api';
+import type { ITraceParentContext } from './interfaces';
 
-const contextManager = new AsyncHooksContextManager();
-contextManager.enable();
-api.context.setGlobalContextManager(contextManager);
+let tracing: Tracing | undefined;
 
-export const tracing = new Tracing(
-  [new HttpInstrumentation({ requireParentforOutgoingSpans: true })],
-  {
-    // eslint-disable-next-line @typescript-eslint/naming-convention
-    '@opentelemetry/instrumentation-express': { enabled: false },
-  },
-  // todo - after architecture design understand which global shared attributes also to add
-  // eslint-disable-next-line @typescript-eslint/naming-convention
-  { [SEMRESATTRS_PROCESS_RUNTIME_NAME]: 'nodejs', [SEMRESATTRS_PROCESS_RUNTIME_VERSION]: NODE_VERSION }
-);
+export function tracingFactory(options: ConstructorParameters<typeof Tracing>[0]): Tracing {
+  tracing = new Tracing({
+    ...options,
+    autoInstrumentationsConfigMap: {
+      '@opentelemetry/instrumentation-http': {
+        requireParentforOutgoingSpans: true,
+      },
+      '@opentelemetry/instrumentation-fs': {
+        requireParentSpan: true,
+      },
+    },
+  });
+
+  return tracing;
+}
+
+export function getTracing(): Tracing {
+  if (!tracing) {
+    throw new Error('tracing not initialized');
+  }
+  return tracing;
+}
 
 export const getSpanLinkOption = (context: ITraceParentContext): Link[] => {
   if (context.traceparent === undefined) {
@@ -32,6 +37,6 @@ export const getSpanLinkOption = (context: ITraceParentContext): Link[] => {
     const invalidParts = `${parts.join('|')}`;
     throw Error(`TraceParentContext include not valid traceparent object: ${invalidParts}`);
   }
-  const spanLinks: Link[] = [{ context: { spanId: parts[2], traceFlags: parseInt(parts[3]), traceId: parts[1] } }];
+  const spanLinks: Link[] = [{ context: { spanId: parts[2]!, traceFlags: parseInt(parts[3]!), traceId: parts[1]! } }];
   return spanLinks;
 };

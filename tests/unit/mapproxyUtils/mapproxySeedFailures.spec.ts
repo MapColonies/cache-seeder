@@ -1,13 +1,13 @@
 /// <reference types="jest-extended" />
 
 import { readFileSync, promises as fsp } from 'node:fs';
-import jsLogger from '@map-colonies/js-logger';
+import { logger } from '../../mocks/logger';
 import nock from 'nock';
 import * as turfBufferModule from '@turf/buffer';
 import { IHttpRetryConfig } from '@map-colonies/mc-utils';
 import * as cmd from '../../../src/common/cmd';
 import { configMock, init as initConfig, clear as clearConfig, setValue } from '../../mocks/config';
-import { getApp } from '../../../src/app';
+import { registerDependencies } from '../../../src/common/dependencyRegistration';
 import { getTask } from '../../mockData/testStaticData';
 import { getContainerConfig, resetContainer } from '../testContainerConfig';
 import { MapproxySeed } from '../../../src/mapproxyUtils/mapproxySeed';
@@ -29,16 +29,13 @@ describe('#MapproxySeed', () => {
     setValue('mapproxy.mapproxyApiUrl', mapproxyTestUrl);
     setValue('seedAttempts', 4);
     setValue('queue', { ...configMock.get<IQueueConfig>('queue'), jobManagerBaseUrl: jobManagerTestUrl });
-    setValue('server.httpRetry', { ...configMock.get<IHttpRetryConfig>('server.httpRetry'), delay: 0 });
-    mapproxyConfigClient = new MapproxyConfigClient(configMock, jsLogger({ enabled: false }), tracerMock);
+    setValue('httpRetry', { ...configMock.get<IHttpRetryConfig>('httpRetry'), delay: 0 });
+    mapproxyConfigClient = new MapproxyConfigClient(configMock, logger, tracerMock);
     console.warn = jest.fn();
 
-    getApp({
-      override: [...getContainerConfig()],
-      useChild: false,
-    });
+    registerDependencies(getContainerConfig());
 
-    mapproxySeed = new MapproxySeed(jsLogger({ enabled: false }), configMock, tracerMock, mapproxyConfigClient);
+    mapproxySeed = new MapproxySeed(logger, configMock, tracerMock, mapproxyConfigClient);
   });
 
   afterEach(function () {
@@ -72,7 +69,7 @@ describe('#MapproxySeed', () => {
         accessStub = jest.spyOn(fsp, 'access').mockImplementation(async () => undefined);
 
         const action = async () => {
-          await mapproxySeed.runSeed(task.parameters.seedTasks[0], task.jobId, task.id);
+          await mapproxySeed.runSeed(task.parameters.seedTasks[0]!, task.jobId, task.id);
         };
 
         await expect(action).rejects.toThrow(`failed seed for job of test with reason: ${cmdSeedErrMsg}`);
@@ -83,7 +80,7 @@ describe('#MapproxySeed', () => {
         expect(writeFileStub).toHaveBeenNthCalledWith(
           2,
           configMock.get('mapproxy.geometryTxtFile'),
-          JSON.stringify(task.parameters.seedTasks[0].geometry),
+          JSON.stringify(task.parameters.seedTasks[0]!.geometry),
           'utf8'
         );
         expect(createSeedYamlFileSpy).toHaveBeenCalledOnce();
@@ -104,7 +101,7 @@ describe('#MapproxySeed', () => {
             '--concurrency',
             '5',
             '--progress-file',
-            `${configMock.get('mapproxy.seedProgressFileDir')}_${task.parameters.seedTasks[0].mode}`,
+            `${configMock.get('mapproxy.seedProgressFileDir')}_${task.parameters.seedTasks[0]!.mode}`,
             '--continue',
             '--skip-uncached',
           ],
@@ -124,7 +121,7 @@ describe('#MapproxySeed', () => {
         accessStub = jest.spyOn(fsp, 'access').mockImplementation(async () => undefined);
 
         const action = async () => {
-          await mapproxySeed.runSeed(task.parameters.seedTasks[0], task.jobId, task.id);
+          await mapproxySeed.runSeed(task.parameters.seedTasks[0]!, task.jobId, task.id);
         };
 
         await expect(action).rejects.toThrow('failed seed for job of test with reason: Failed on generating mapproxy current yaml');
@@ -146,7 +143,7 @@ describe('#MapproxySeed', () => {
         accessStub = jest.spyOn(fsp, 'access').mockImplementation(async () => undefined);
 
         const action = async () => {
-          await mapproxySeed.runSeed(task.parameters.seedTasks[0], task.jobId, task.id);
+          await mapproxySeed.runSeed(task.parameters.seedTasks[0]!, task.jobId, task.id);
         };
 
         await expect(action).rejects.toThrow('failed seed for job of test with reason: Failed on generating geometry coverage file');
@@ -157,7 +154,7 @@ describe('#MapproxySeed', () => {
         expect(writeFileStub).toHaveBeenNthCalledWith(
           2,
           configMock.get('mapproxy.geometryTxtFile'),
-          JSON.stringify(task.parameters.seedTasks[0].geometry),
+          JSON.stringify(task.parameters.seedTasks[0]!.geometry),
           'utf8'
         );
       });
@@ -173,7 +170,7 @@ describe('#MapproxySeed', () => {
         const bufferSpy = jest.spyOn(turfBufferModule, 'default');
 
         const action = async () => {
-          await mapproxySeed.runSeed({ ...task.parameters.seedTasks[0], toZoomLevel: 1, fromZoomLevel: 20 }, task.jobId, task.id);
+          await mapproxySeed.runSeed({ ...task.parameters.seedTasks[0]!, toZoomLevel: 1, fromZoomLevel: 20 }, task.jobId, task.id);
         };
 
         await expect(action).rejects.toThrow(`from zoom level value cannot be bigger than to zoom level value`);
@@ -193,7 +190,7 @@ describe('#MapproxySeed', () => {
         const bufferSpy = jest.spyOn(turfBufferModule, 'default');
 
         const action = async () => {
-          await mapproxySeed.runSeed({ ...task.parameters.seedTasks[0], refreshBefore: 'badDate' }, task.jobId, task.id);
+          await mapproxySeed.runSeed({ ...task.parameters.seedTasks[0]!, refreshBefore: 'badDate' }, task.jobId, task.id);
         };
 
         await expect(action).rejects.toThrow(`Date string must be 'ISO_8601' format: yyyy-MM-dd'T'HH:mm:ss, for example: 2023-11-07T12:35:00`);
@@ -218,7 +215,7 @@ describe('#MapproxySeed', () => {
         const bufferSpy = jest.spyOn(turfBufferModule, 'default');
 
         const action = async () => {
-          await mapproxySeed.runSeed(task.parameters.seedTasks[0], task.jobId, task.id);
+          await mapproxySeed.runSeed(task.parameters.seedTasks[0]!, task.jobId, task.id);
         };
 
         await expect(action).rejects.toThrow(
@@ -232,7 +229,7 @@ describe('#MapproxySeed', () => {
         expect(writeFileStub).toHaveBeenNthCalledWith(
           2,
           configMock.get('mapproxy.geometryTxtFile'),
-          JSON.stringify(task.parameters.seedTasks[0].geometry),
+          JSON.stringify(task.parameters.seedTasks[0]!.geometry),
           'utf8'
         );
         expect(createSeedYamlFileSpy).toHaveBeenCalledOnce();
@@ -252,7 +249,7 @@ describe('#MapproxySeed', () => {
         const bufferSpy = jest.spyOn(turfBufferModule, 'default');
 
         const action = async () => {
-          await mapproxySeed.runSeed(task.parameters.seedTasks[0], task.jobId, task.id);
+          await mapproxySeed.runSeed(task.parameters.seedTasks[0]!, task.jobId, task.id);
         };
 
         await expect(action).rejects.toThrow(`failed seed for job of test with reason: Cache type should be of type Redis`);
@@ -276,7 +273,7 @@ describe('#MapproxySeed', () => {
         const bufferSpy = jest.spyOn(turfBufferModule, 'default');
 
         const action = async () => {
-          await mapproxySeed.runSeed(task.parameters.seedTasks[0], task.jobId, task.id);
+          await mapproxySeed.runSeed(task.parameters.seedTasks[0]!, task.jobId, task.id);
         };
 
         await expect(action).rejects.toThrow(
@@ -290,7 +287,7 @@ describe('#MapproxySeed', () => {
         expect(writeFileStub).toHaveBeenNthCalledWith(
           2,
           configMock.get('mapproxy.geometryTxtFile'),
-          JSON.stringify(task.parameters.seedTasks[0].geometry),
+          JSON.stringify(task.parameters.seedTasks[0]!.geometry),
           'utf8'
         );
         expect(createSeedYamlFileSpy).toHaveBeenCalledOnce();
@@ -300,7 +297,7 @@ describe('#MapproxySeed', () => {
 
       it('Failed on not exists grid', async function () {
         const task = getTask();
-        const badGridTask = { ...task.parameters.seedTasks[0], grid: 'badGrid' };
+        const badGridTask = { ...task.parameters.seedTasks[0]!, grid: 'badGrid' };
         const mockYamlFile = 'tests/mockData/mockConfig.yaml';
         const yamlContent = readFileSync(mockYamlFile, { encoding: 'utf8' });
         nock(mapproxyTestUrl).get(`/config`).reply(200, yamlContent);
