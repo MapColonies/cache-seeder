@@ -1,6 +1,6 @@
 import { promises as fsp } from 'node:fs';
 import { dump } from 'js-yaml';
-import { buffer } from '@turf/buffer';
+import turfBuffer from '@turf/buffer';
 import { Feature, Polygon } from 'geojson';
 import type { Logger } from '@map-colonies/js-logger';
 import { inject, singleton } from 'tsyringe';
@@ -419,7 +419,7 @@ export class MapproxySeed {
     });
 
     try {
-      const bufferedPolygon = buffer(task.geometry as Feature<Polygon>, currentBuffer, { units: 'meters' });
+      const bufferedPolygon = turfBuffer(task.geometry as Feature<Polygon>, currentBuffer, { units: 'meters' });
 
       if (bufferedPolygon === undefined) {
         this.logger.error(`Failed to apply buffer to geometry for task ${taskId}, aborting seed operation`);
