@@ -19,7 +19,7 @@ data:
   {{ if $tracing.enabled }}
   TELEMETRY_TRACING_URL: {{ $tracing.url }}
   {{ end }}
-  {{-with $openTelemetryOptions -}}
+  {{ -with $openTelemetryOptions -}}
   OPENTELEMETRY_LOGGING_ENABLED: {{ .enabled | quote }}
   {{ if .enabled }}
   OPENTELEMETRY_LOGGING_URL: {{ .url | quote }}
