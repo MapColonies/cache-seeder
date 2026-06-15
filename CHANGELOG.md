@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [2.3.2](https://github.com/MapColonies/cache-seeder/compare/v2.3.1...v2.3.2) (2026-06-15)
+
+
+### Bug Fixes
+
+* configmap formatting ([#49](https://github.com/MapColonies/cache-seeder/issues/49)) ([3ca0e43](https://github.com/MapColonies/cache-seeder/commit/3ca0e4335a9f27d3ed6e88e67d1247a1b5cb4398))
+
 ## [2.3.1](https://github.com/MapColonies/cache-seeder/compare/v2.3.0...v2.3.1) (2026-06-15)
 
 
