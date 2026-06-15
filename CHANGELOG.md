@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [2.3.1](https://github.com/MapColonies/cache-seeder/compare/v2.3.0...v2.3.1) (2026-06-15)
+
+
+### Bug Fixes
+
+* indentation for OpenTelemetry options in configmap ([#47](https://github.com/MapColonies/cache-seeder/issues/47)) ([0282c27](https://github.com/MapColonies/cache-seeder/commit/0282c276bd01397a48f5f896efe5a54cbd119969))
+
 ## [2.3.0](https://github.com/MapColonies/cache-seeder/compare/v2.1.1...v2.3.0) (2026-06-10)
 
 
