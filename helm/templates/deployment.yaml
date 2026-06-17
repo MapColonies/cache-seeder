@@ -77,6 +77,10 @@ spec:
               subPath: {{ $fs.internalPvc.tilesSubPath }}
             {{- end }}
           env:
+            - name: K8S_POD_UID
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.uid
             - name: SERVER_PORT
               value: {{ .Values.env.targetPort | quote }}
             {{- if .Values.global.ca.caSecretName }}
