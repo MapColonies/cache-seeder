@@ -87,7 +87,7 @@ spec:
             - name: REQUESTS_CA_BUNDLE
               value: {{ printf "%s/%s" .Values.global.ca.caPath .Values.global.ca.caKey | quote }}
             - name: NODE_EXTRA_CA_CERTS
-              value: {{ printf "[%s/%s]" .Values.global.ca.caPath .Values.global.ca.caKey | quote }}
+              value: {{ printf "%s/%s" .Values.global.ca.caPath .Values.global.ca.caKey | quote }}
             {{- end }}
             {{- if eq (upper $storage.tilesStorageProvider) "S3" }}
             - name: AWS_ACCESS_KEY_ID
