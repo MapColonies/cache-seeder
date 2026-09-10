@@ -138,15 +138,15 @@ telemetry:
     level: info
     prettyPrint: false
     opentelemetryOptions:
-      enabled: false
-      url: ''
+      enabled: true
+      url: http://localhost:4317
       # resourceAttributes:
       #   service.namespace: namespace
       #   deployment.environment: dev
   tracing:
-    enabled: false
+    enabled: true
     # url can be overridden from global.telemetry.tracing.url
-    url: ''
+    url: http://localhost:55681/v1/traces
 
 env:
   httpRetry:
