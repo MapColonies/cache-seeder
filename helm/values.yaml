@@ -116,7 +116,7 @@ configManagement:
 image:
   repository: cache-seeder
   tag: 'latest'
-  pullPolicy: Always
+  pullPolicy: IfNotPresent
 
 jobDefinitions:
   jobs:
