@@ -1,8 +1,9 @@
 global:
   cloudProvider: {}
-  tracing: {}
-  metrics: {}
-  openTelemetryOptions: {}
+  telemetry:
+    tracing: {}
+    logger:
+      opentelemetryOptions: {}
   environment: ''
   jobDefinitions: {}
   storage:
@@ -106,14 +107,6 @@ serviceUrls:
   heartbeatManager: ""
   jobTracker: ""
 
-tracing:
-  enabled: false
-  url: ''
-
-metrics:
-  enabled: false
-  url: ''
-
 configManagement:
   offlineMode: true
   name: 'cache-seeder'
@@ -133,19 +126,29 @@ jobDefinitions:
     seed:
       type: ''
 
-env:
+server:
   port: 8080
   targetPort: 8080
   protocol: TCP
-  logLevel: info
-  logPrettyPrintEnabled: false
-  openTelemetryOptions:
-    enabled: false
-    url: ''
-    resourceAttributes: {}
   responseCompressionEnabled: true
   requestPayloadLimit: 1mb
 
+telemetry:
+  logger:
+    level: info
+    prettyPrint: false
+    opentelemetryOptions:
+      enabled: false
+      url: ''
+      # resourceAttributes:
+      #   service.namespace: namespace
+      #   deployment.environment: dev
+  tracing:
+    enabled: false
+    # url can be overridden from global.telemetry.tracing.url
+    url: ''
+
+env:
   httpRetry:
     attempts: 5
     delay: exponential
