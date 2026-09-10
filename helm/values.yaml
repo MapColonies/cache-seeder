@@ -164,7 +164,7 @@ env:
     seedYamlDir: /mapproxy/seed.yaml
     geometryTxtFile: /mapproxy/coverage.json
   seedAttempts: 5
-  seedConcurrency: 5
+  seedConcurrency: 25
   mapproxyCmdCommand: "mapproxy-seed"
   refreshBeforeYearsOffset: 1
   invalidBboxInitialBufferMeters: 200
