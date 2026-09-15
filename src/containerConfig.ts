@@ -20,7 +20,7 @@ export const registerExternalValues = async (options?: RegisterOptions): Promise
   const config = configInstance as unknown as IConfig;
 
   const loggerConfig = configInstance.get('telemetry.logger');
-  const logger = await jsLogger({ ...loggerConfig, prettyPrint: loggerConfig.prettyPrint, mixin: getOtelMixin() });
+  const logger = await jsLogger({ ...loggerConfig, mixin: getOtelMixin() });
 
   const queueConfig = config.get<IQueueConfig>('queue');
   const tracer = trace.getTracer(SERVICE_NAME);
