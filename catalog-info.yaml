@@ -14,6 +14,6 @@ metadata:
     - job-manager
 spec:
   type: service
-  lifecycle: production
+  lifecycle: deprecated
   owner: RasterTeam
   system: Ingestion
