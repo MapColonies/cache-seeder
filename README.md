@@ -1,5 +1,12 @@
 # Mapproxy Cache Seeder
 
+> [!WARNING]
+> **Deprecated and archived (MAPCO-11268).** This worker is no longer deployed and the repository is read-only.
+> MapProxy Redis cache invalidation is now done by [`cleaner`](https://github.com/MapColonies/cleaner): `overseer` creates `Update_Delete_Cache` / `Swap_Delete_Cache` jobs instead of `TilesSeeding` jobs.
+>
+> - Design: [Redis cache deletion: move to `cleaner`, deprecate `cache-seeder`](https://github.com/MapColonies/cleaner/blob/master/docs/redis-cache-deletion/design.md)
+> - Research and benchmark evidence: [`cleaner/docs/redis-cache-deletion`](https://github.com/MapColonies/cleaner/tree/master/docs/redis-cache-deletion)
+
 ----------------------------------
 
 ![badge-alerts-lgtm](https://img.shields.io/lgtm/alerts/github/MapColonies/cache-seeder?style=for-the-badge)
